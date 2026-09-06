@@ -227,7 +227,9 @@ const LEVELS = [
   { rows: 7, cols: 8 }, // 28
   { rows: 8, cols: 8 }, // 32
   { rows: 9, cols: 8 }, // 36
-  { rows: 10, cols: 8 }, // 40（最終關）
+  { rows: 10, cols: 8 }, // 40
+  { rows: 7, cols: 12 }, // 42
+  { rows: 8, cols: 12 }, // 48（最終關）
 ];
 const GLYPHS = [
   "M12 4.5 A7.5 7.5 0 1 1 11.99 4.5",                      // 01 ring
@@ -270,8 +272,16 @@ const GLYPHS = [
   "M4.5 12.5 A7.5 7.5 0 0 1 19.5 12.5 H4.5 Z",              // 38 half-disc top（填滿）
   "M9 5 V19 M15 5 V19",                                     // 39 bars（雙直線）
   "M5.5 5.5 H18.5 V18.5 H5.5 Z M12 8.8 A3.2 3.2 0 1 0 12 15.2 A3.2 3.2 0 1 0 12 8.8 Z", // 40 square-ring
+  "M12 4.2 A7.8 7.8 0 1 0 12 19.8 A7.8 7.8 0 1 0 12 4.2 Z M12 8.6 A3.4 3.4 0 1 0 12 15.4 A3.4 3.4 0 1 0 12 8.6 Z", // 41 double-ring
+  "M12 4 V20 M4 12 H20 M5.7 5.7 L18.3 18.3 M18.3 5.7 L5.7 18.3",              // 42 star8（八輻）
+  "M4.5 11.5 A7.5 7.5 0 0 0 19.5 11.5 H4.5 Z",                                // 43 half-disc bottom（填滿）
+  "M8 6 L3 12 L8 18 M16 6 L21 12 L16 18",                                      // 44 angle brackets
+  "M12 4.5 A4 4 0 0 1 16 8.5 V15.5 A4 4 0 0 1 12 19.5 A4 4 0 0 1 8 15.5 V8.5 A4 4 0 0 1 12 4.5 Z", // 45 capsule vertical
+  "M4.5 12 A4 4 0 0 1 8.5 8 H15.5 A4 4 0 0 1 19.5 12 A4 4 0 0 1 15.5 16 H8.5 A4 4 0 0 1 4.5 12 Z", // 46 capsule horizontal
+  "M9 6 H7 V18 H9 M15 6 H17 V18 H15",                                          // 47 brackets
+  "M3 13 H8 L10.5 7 L13 16 L15.5 10.5 H21",                                    // 48 pulse
 ];
-const FILL_GLYPHS = new Set([1, 3, 5, 7, 9, 26, 28, 37]);   // 0-based：disc/sqr/dia/triUp/triDown/crescent/slash-bar/half-disc-top 填滿版
+const FILL_GLYPHS = new Set([1, 3, 5, 7, 9, 26, 28, 37, 43]); // 0-based：…/half-disc-top/half-disc-bottom 填滿版
 const PALETTE = ["#ffb84d", "#ff8a7a", "#7ec8ff", "#7ee0a3", "#d7a1ff", "#ff9ecb", "#ffe066", "#8fe8e0", "#9fb8ff", "#ff9e5e"];
 
 const Store = {
