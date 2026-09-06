@@ -2,7 +2,7 @@
 
 找一對，連一條線。清空棋盤，進入下一關。
 
-A quiet pair-matching game — geometric tiles, ≤2-turn connections, eight progressively larger boards.
+A quiet pair-matching game — geometric tiles, ≤2-turn connections, ten progressively larger boards up to 8×8.
 
 Play online: **https://pair.wahsun.org/**
 

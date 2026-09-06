@@ -187,7 +187,9 @@ const LEVELS = [
   { rows: 4, cols: 8 }, // 16
   { rows: 6, cols: 6 }, // 18
   { rows: 5, cols: 8 }, // 20
-  { rows: 6, cols: 8 }, // 24（最終關）
+  { rows: 6, cols: 8 }, // 24
+  { rows: 7, cols: 8 }, // 28
+  { rows: 8, cols: 8 }, // 32（最終關）
 ];
 const GLYPHS = [
   "M12 4.5 A7.5 7.5 0 1 1 11.99 4.5",                      // 01 ring
@@ -214,8 +216,16 @@ const GLYPHS = [
   "M5.5 19 V7.5 C5.5 6.4 6.4 5.5 7.5 5.5 H18.5",            // 22 L-bracket
   "M19 12 H6 M11.5 7 L6.5 12 L11.5 17",                     // 23 arrow right
   "M12 4 V20 M17 9 L12 4 L7 9",                             // 24 pin-up
+  "M7 5.5 H17 L12.5 12 L17 18.5 H7 L11.5 12 Z",             // 25 bowtie
+  "M12 3.8 L17.9 6.2 V12 L17.9 17.8 L12 20.2 L6.1 17.8 V12 L6.1 6.2 Z", // 26 octagon
+  "M15.6 3.6 A8.4 8.4 0 1 0 15.6 20.4 A6.4 6.4 0 1 1 15.6 3.6 Z",     // 27 crescent
+  "M12 4.2 A7.8 7.8 0 1 0 12 19.8 A7.8 7.8 0 1 0 12 4.2 Z M12 10.6 A1.4 1.4 0 1 0 12 13.4 A1.4 1.4 0 1 0 12 10.6 Z", // 28 target
+  "M7.2 18.2 L16.6 8.8 L17.8 10 L8.4 19.4 Z",               // 29 slash-bar
+  "M7.5 4 H20.5 L16.5 20 H3.5 Z",                           // 30 parallelogram
+  "M12 4.2 A7.8 7.8 0 1 0 12 19.8 A7.8 7.8 0 1 0 12 4.2 Z M7.2 16.8 L16.8 7.2", // 31 circle-slash
+  "M5.5 6.5 H18.5 M12 6.5 V18.5",                           // 32 T
 ];
-const FILL_GLYPHS = new Set([1, 3, 5, 7, 9]);               // 0-based：disc/sqr/dia/triUp/triDown 填滿版
+const FILL_GLYPHS = new Set([1, 3, 5, 7, 9, 26, 28]);        // 0-based：disc/sqr/dia/triUp/triDown/crescent/slash-bar 填滿版
 const PALETTE = ["#ffb84d", "#ff8a7a", "#7ec8ff", "#7ee0a3", "#d7a1ff", "#ff9ecb", "#ffe066", "#8fe8e0", "#9fb8ff", "#ff9e5e"];
 
 const Store = {
@@ -328,6 +338,41 @@ if (typeof module !== "undefined" && module.exports) {
    UI
    ============================================================ */
 const $ = (id) => document.getElementById(id);
+
+/* ============================================================
+   點擊音效（Web Audio，無素材）
+   ============================================================ */
+let actx = null;
+function audioInit() {
+  if (!actx) {
+    try { const AC = window.AudioContext || window.webkitAudioContext; if (AC) actx = new AC(); } catch (e) { actx = null; }
+  }
+  if (actx && actx.state === "suspended") { try { actx.resume(); } catch (e) {} }
+}
+function beep(f0, f1, dur, type, vol) {
+  audioInit();
+  if (!actx || actx.state !== "running") return;
+  try {
+    const t = actx.currentTime;
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = type || "sine";
+    o.frequency.setValueAtTime(Math.max(1, f0), t);
+    if (f1 && f1 !== f0) o.frequency.exponentialRampToValueAtTime(Math.max(1, f1), t + dur);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol || 0.05, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(actx.destination);
+    o.start(t); o.stop(t + dur + 0.06);
+  } catch (e) {}
+}
+const SFX = {
+  tick() { beep(880, 1160, 0.04, "sine", 0.05); },            // 輕點
+  select() { beep(660, 940, 0.05, "triangle", 0.06); },        // 選中棋子
+  match() { beep(660, 990, 0.09, "triangle", 0.08); setTimeout(() => beep(990, 1400, 0.12, "triangle", 0.06), 70); }, // 成功消除
+  invalid() { beep(210, 140, 0.11, "square", 0.04); },         // 無法連接
+  button() { beep(520, 640, 0.035, "sine", 0.04); },           // 一般按鈕
+};
+document.addEventListener("pointerdown", audioInit, { once: false });
 const boardEl = $("board"), lineSvg = $("lineSvg");
 const viewMenu = $("viewMenu"), viewGame = $("viewGame"), hudGame = $("hudGame");
 let progress = Progress.load();
@@ -363,7 +408,7 @@ function renderLevels() {
     b.innerHTML = `<div class="n">${lv}</div><div class="meta">${L.rows}×${L.cols} · ${pairs} 對</div><div class="best"></div>`;
     const best = progress.best[lv];
     if (best) b.querySelector(".best").textContent = `最佳 ${best.time} · ${best.moves} 步`;
-    b.addEventListener("click", () => startLevel(i));
+    b.addEventListener("click", () => { SFX.tick(); startLevel(i); });
     wrap.appendChild(b);
   });
 }
@@ -463,17 +508,20 @@ function onCell(r, c) {
   if (v === null) return;
   clearHint();
   if (!state.sel) {
+    SFX.select();
     state.sel = { r, c };
     renderBoard();
     return;
   }
   const s = state.sel;
-  if (s.r === r && s.c === c) { state.sel = null; renderBoard(); return; }
+  if (s.r === r && s.c === c) { SFX.tick(); state.sel = null; renderBoard(); return; }
   state.sel = null;
   const path = pathCells(state.board, s.r, s.c, r, c);
   if (v === state.board[s.r][s.c] && path) {
+    SFX.match();
     removePair(s, { r, c }, path);
   } else {
+    SFX.invalid();
     flashInvalid(r, c);
     renderBoard();
   }
@@ -584,31 +632,32 @@ function timeToSec(s) { const [m, ss] = s.split(":").map(Number); return m * 60 
 setInterval(() => { if (state && !state.paused && !state.cleared && !viewGame.hidden) renderHud(); }, 1000);
 
 /* 按鈕 */
-$("btnMenu").addEventListener("click", goMenu);
-$("btnQuit").addEventListener("click", goMenu);
-$("btnQuit2").addEventListener("click", goMenu);
+function withBtn(fn) { return () => { SFX.button(); fn(); }; }
+$("btnMenu").addEventListener("click", withBtn(goMenu));
+$("btnQuit").addEventListener("click", withBtn(goMenu));
+$("btnQuit2").addEventListener("click", withBtn(goMenu));
 function goMenu() {
   state = null;
   $("pauseOverlay").hidden = true; $("clearOverlay").hidden = true;
   viewGame.hidden = true; hudGame.hidden = true; viewMenu.hidden = false;
   renderLevels();
 }
-$("btnRestart").addEventListener("click", () => { if (state) startLevel(state.lv - 1); });
-$("btnRestart2").addEventListener("click", () => { if (state) startLevel(state.lv - 1); });
-$("btnPause").addEventListener("click", () => {
+$("btnRestart").addEventListener("click", withBtn(() => { if (state) startLevel(state.lv - 1); }));
+$("btnRestart2").addEventListener("click", withBtn(() => { if (state) startLevel(state.lv - 1); }));
+$("btnPause").addEventListener("click", withBtn(() => {
   if (!state || state.cleared) return;
   state.paused = true; state.elapsed += (Date.now() - state.startAt) / 1000;
   $("pauseOverlay").hidden = false;
-});
-$("btnResume").addEventListener("click", () => {
+}));
+$("btnResume").addEventListener("click", withBtn(() => {
   if (!state) return;
   state.paused = false; state.startAt = Date.now();
   $("pauseOverlay").hidden = true;
   renderHud();
-});
-$("btnNext").addEventListener("click", () => { if (state) startLevel(state.lv); });
-$("btnReplay").addEventListener("click", () => { if (state) startLevel(state.lv - 1); });
-$("btnUndo").addEventListener("click", () => {
+}));
+$("btnNext").addEventListener("click", withBtn(() => { if (state) startLevel(state.lv); }));
+$("btnReplay").addEventListener("click", withBtn(() => { if (state) startLevel(state.lv - 1); }));
+$("btnUndo").addEventListener("click", withBtn(() => {
   if (!state || !state.history.length || state.cleared) return;
   const h = state.history.pop();
   state.board[h.a.r][h.a.c] = h.id;
@@ -617,8 +666,8 @@ $("btnUndo").addEventListener("click", () => {
   clearHint();
   renderBoard(); renderHud();
   toast("已復原上一步");
-});
-$("btnHint").addEventListener("click", () => {
+}));
+$("btnHint").addEventListener("click", withBtn(() => {
   if (!state || state.cleared) return;
   const mv = findMove(state.board);
   if (!mv) { toast("暫時沒有可消對"); return; }
@@ -626,15 +675,15 @@ $("btnHint").addEventListener("click", () => {
   state.elapsed += 10;
   renderBoard(); renderHud();
   toast("提示 ＋10 秒");
-});
-$("btnShuffle").addEventListener("click", () => {
+}));
+$("btnShuffle").addEventListener("click", withBtn(() => {
   if (!state || state.cleared) return;
   state.board = reshuffle(state.board);
   state.elapsed += 15;
   clearHint();
   renderBoard(); renderHud();
   toast("洗牌 ＋15 秒");
-});
+}));
 
 window.addEventListener("resize", () => { if (state && !viewGame.hidden) { renderBoard(); } });
 window.__PAIR_DEBUG = { get state() { return state; }, LEVELS, canConnect, findMove, pathCells };
