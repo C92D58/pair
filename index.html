@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, maximum-scale=1" />
 <meta name="theme-color" content="#0d0d11" />
 <title>PAIR — 對對相連 · 找一對，連一條線</title>
 <style>
@@ -16,13 +16,14 @@
   *{box-sizing:border-box;margin:0;padding:0}
   [hidden]{display:none!important}
   html{background:var(--bg)}
-  body{background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased;min-height:100svh;display:flex;flex-direction:column}
-  button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased;min-height:100svh;display:flex;flex-direction:column;overscroll-behavior-y:contain;-webkit-text-size-adjust:100%}
+  button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+  .board,.cell{-webkit-touch-callout:none}
   ::selection{background:var(--amber);color:#0d0d11}
 
   /* ── 頂欄 ── */
   header{position:sticky;top:0;z-index:40;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
-  .top{max-width:860px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 18px}
+  .top{max-width:860px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:max(12px,env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) 12px max(18px,env(safe-area-inset-left))}
   .wordmark{font-family:var(--mono);font-weight:700;letter-spacing:.24em;font-size:15px;color:var(--ink)}
   .wordmark i{color:var(--amber);font-style:normal}
   .tag{font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:var(--muted);text-transform:uppercase;display:block;margin-top:3px}
@@ -82,10 +83,10 @@
 
   .hint-line{margin-top:26px;font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--faint);line-height:2}
 
-  footer{padding:18px;text-align:center;font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--faint);border-top:1px solid var(--line)}
+  footer{padding:18px;padding-left:max(18px,env(safe-area-inset-left));padding-right:max(18px,env(safe-area-inset-right));padding-bottom:max(18px,env(safe-area-inset-bottom));text-align:center;font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--faint);border-top:1px solid var(--line)}
 
   /* ── 遮罩（暫停 / 通關 / toast）── */
-  .overlay{position:fixed;inset:0;z-index:60;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:22px;text-align:center;padding:24px;animation:fadeIn .3s ease}
+  .overlay{position:fixed;inset:0;z-index:60;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:22px;text-align:center;padding:calc(20px + env(safe-area-inset-top)) calc(24px + max(0px,env(safe-area-inset-left),env(safe-area-inset-right))) calc(20px + env(safe-area-inset-bottom));animation:fadeIn .3s ease;overflow-y:auto}
   .overlay h2{font-size:clamp(28px,6vw,44px);font-weight:200;letter-spacing:.14em}
   .overlay h2 b{color:var(--amber);font-weight:700}
   .overlay .stats{font-family:var(--mono);font-size:12px;letter-spacing:.14em;color:var(--muted);line-height:2.2}
@@ -94,11 +95,46 @@
   @keyframes fadeIn{from{opacity:0}to{opacity:1}}
   .rec-line{font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:.14em}
 
-  #toast{position:fixed;left:50%;bottom:34px;transform:translateX(-50%) translateY(10px);z-index:80;font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:#0d0d11;background:var(--amber);padding:9px 16px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
+  #toast{position:fixed;left:50%;bottom:calc(34px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(10px);z-index:80;font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:#0d0d11;background:var(--amber);padding:9px 16px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;max-width:calc(100vw - 32px);white-space:nowrap}
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
   @media (pointer:coarse){ .btn{padding:11px 15px} .lvl{padding:18px 8px 14px} }
-  @media (max-width:560px){ .hud .hide-m{display:none} .tag{display:none} }
+  /* 觸控裝置：避免「點完殘留 hover」 */
+  @media (hover:none){
+    .btn:hover{color:var(--muted);border-color:var(--line2)}
+    .btn.primary:hover{background:none;color:var(--amber)}
+    .cell:hover .inner{background:transparent}
+    .lvl:hover{border-color:var(--line2);transform:none}
+  }
+  /* 窄螢幕安全區內縮 */
+  @media (max-width:700px){ .shell{padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))} }
+  /* 行動端：工具列三列滿寬、版面留白收緊 */
+  @media (max-width:560px){
+    .hud .hide-m{display:none} .tag{display:none}
+    .toolbar{gap:6px;margin:2px 0 12px}
+    .toolbar .spacer{display:none}
+    .toolbar .btn{flex:0 1 calc((100% - 12px)/3);text-align:center;padding:11px 2px;font-size:10px;white-space:nowrap;overflow:hidden}
+    .levels{gap:8px}
+    .center-wrap{padding:6px 0 18px}
+  }
+  @media (max-width:380px){
+    .top{gap:8px}
+    .wordmark{font-size:13px;letter-spacing:.18em}
+    .hud{gap:8px;font-size:10px}
+    .hero-sub{font-size:13px}
+  }
+  /* 矮螢幕（橫屏等）：選單可捲、頂置顯示，藏 footer 騰空間 */
+  @media (max-height:560px){
+    .shell{overflow-y:auto}
+    .center-wrap{justify-content:flex-start;padding-top:8px}
+    .hero-title{font-size:38px}
+    .hero-sub{margin-top:8px}
+    .levels{margin-top:16px}
+    .k{margin:12px 0 8px}
+    .lvl{padding:10px 6px 8px}
+    .lvl .n{font-size:17px}
+    footer{display:none}
+  }
   @media (prefers-reduced-motion:reduce){ *{animation-duration:.001s!important;transition-duration:.001s!important} }
 </style>
 </head>
@@ -453,9 +489,14 @@ function countLeft(board) {
 }
 
 function cellSize() {
-  const wrapW = Math.min(window.innerWidth - 36, 860 - 36);
-  const avail = Math.min(wrapW, (window.innerHeight * 0.62));
-  return Math.max(30, Math.min(58, Math.floor(avail / state.cols)));
+  // 以「遊戲區實際可用尺寸」計算，而非粗略的視窗比例
+  const gameEl = $("viewGame");
+  const tb = gameEl.querySelector(".toolbar");
+  const availW = Math.max(200, gameEl.clientWidth - 36);
+  const availH = Math.max(160, gameEl.clientHeight - (tb ? tb.offsetHeight + 12 : 44) - 56);
+  const byW = availW / state.cols;
+  const byH = availH / state.rows;
+  return Math.max(16, Math.min(58, Math.floor(Math.min(byW, byH))));
 }
 
 /* 渲染棋盤 */
@@ -685,7 +726,8 @@ $("btnShuffle").addEventListener("click", withBtn(() => {
   toast("洗牌 ＋15 秒");
 }));
 
-window.addEventListener("resize", () => { if (state && !viewGame.hidden) { renderBoard(); } });
+window.addEventListener("resize", () => { if (state && !viewGame.hidden) renderBoard(); });
+if (window.visualViewport) window.visualViewport.addEventListener("resize", () => { if (state && !viewGame.hidden) renderBoard(); });
 window.__PAIR_DEBUG = { get state() { return state; }, LEVELS, canConnect, findMove, pathCells };
 
 renderLevels();
