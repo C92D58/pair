@@ -1,0 +1,644 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#0d0d11" />
+<title>PAIR — 對對相連 · 找一對，連一條線</title>
+<style>
+  :root{
+    --bg:#0d0d11; --panel:#15151b; --panel2:#1c1c24; --ink:#e9e6df;
+    --muted:#8b8a94; --faint:#55545e; --line:rgba(233,230,223,.14); --line2:rgba(233,230,223,.26);
+    --amber:#ffb84d; --ok:#7ee0a3; --danger:#ff7d6e;
+    --mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"PingFang TC","PingFang SC","Hiragino Sans GB","Microsoft JhengHei","Noto Sans TC",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{background:var(--bg)}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased;min-height:100svh;display:flex;flex-direction:column}
+  button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+  ::selection{background:var(--amber);color:#0d0d11}
+
+  /* ── 頂欄 ── */
+  header{position:sticky;top:0;z-index:40;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .top{max-width:860px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 18px}
+  .wordmark{font-family:var(--mono);font-weight:700;letter-spacing:.24em;font-size:15px;color:var(--ink)}
+  .wordmark i{color:var(--amber);font-style:normal}
+  .tag{font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:var(--muted);text-transform:uppercase;display:block;margin-top:3px}
+  .hud{display:flex;align-items:center;gap:14px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--muted)}
+  .hud b{color:var(--ink);font-weight:600}
+  .hud .sep{opacity:.4}
+
+  main{flex:1;display:flex;flex-direction:column}
+  .shell{width:100%;max-width:860px;margin:0 auto;padding:18px 18px 40px;display:flex;flex-direction:column;flex:1}
+
+  /* ── 工具列 ── */
+  .toolbar{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;margin:4px 0 14px}
+  .btn{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding:9px 14px;border:1px solid var(--line2);color:var(--muted);transition:color .2s,border-color .2s,background .2s;user-select:none}
+  .btn:hover{color:var(--ink);border-color:var(--amber)}
+  .btn:disabled{opacity:.35;pointer-events:none}
+  .btn.primary{border-color:var(--amber);color:var(--amber)}
+  .btn.primary:hover{background:var(--amber);color:#0d0d11}
+  .btn.small{padding:6px 10px;font-size:10px}
+  .spacer{flex:1}
+
+  /* ── 棋盤 ── */
+  .board-wrap{position:relative;margin:0 auto;display:inline-block}
+  .board{display:grid;user-select:none;-webkit-user-select:none}
+  .cell{position:relative;aspect-ratio:1;display:grid;place-items:center;cursor:pointer;padding:0;border-radius:4px;outline:1px solid rgba(233,230,223,.05)}
+  .cell:not(.ghost){background:rgba(233,230,223,.015)}
+  .cell .inner{position:absolute;inset:0;display:grid;place-items:center;border-radius:4px;transition:background .15s,transform .1s}
+  .cell:hover .inner{background:rgba(255,184,77,.07)}
+  .cell.sel .inner{box-shadow:inset 0 0 0 2px var(--amber);background:rgba(255,184,77,.12)}
+  .cell.hint .inner{box-shadow:inset 0 0 0 2px var(--ok);background:rgba(126,224,163,.10)}
+  .cell.ghost{opacity:0;pointer-events:none;outline:none}
+  .cell.clearing{outline:none}
+  .cell.clearing .inner{animation:pop .3s cubic-bezier(.22,1,.36,1) forwards}
+  @keyframes pop{to{opacity:0;transform:scale(.55)}}
+  .cell svg{width:58%;height:58%;display:block;overflow:visible}
+  .tile-line{position:absolute;inset:0;pointer-events:none;z-index:30;overflow:visible}
+  .tile-line polyline{fill:none;stroke:var(--amber);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;opacity:.95}
+
+  /* ── 區塊標題 ── */
+  .k{font-family:var(--mono);font-size:10px;letter-spacing:.3em;color:var(--amber);text-transform:uppercase;margin:26px 0 12px}
+  .k::before{content:"— ";opacity:.55}
+  .center-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:10px 0 30px}
+
+  /* ── 主選單 / 選關 ── */
+  .hero-title{font-size:clamp(42px,9vw,72px);font-weight:200;letter-spacing:.12em;font-family:var(--sans)}
+  .hero-title b{font-weight:700;color:var(--amber)}
+  .hero-sub{margin-top:14px;font-size:14px;color:var(--muted);letter-spacing:.06em}
+  .hero-en{margin-top:6px;font-family:var(--mono);font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--faint)}
+  .levels{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;width:100%;max-width:560px;margin-top:34px}
+  .lvl{position:relative;padding:16px 8px 12px;border:1px solid var(--line2);text-align:center;transition:border-color .2s,transform .15s}
+  .lvl:hover{border-color:var(--amber);transform:translateY(-2px)}
+  .lvl .n{font-family:var(--mono);font-size:22px;font-weight:600;color:var(--ink)}
+  .lvl .meta{font-family:var(--mono);font-size:9px;letter-spacing:.18em;color:var(--faint);text-transform:uppercase;margin-top:6px}
+  .lvl .best{font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--amber);margin-top:5px;min-height:12px}
+  .lvl.locked{opacity:.38;pointer-events:none}
+  .lvl.locked::after{content:"🔒";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:16px;filter:grayscale(1)}
+  .lvl.cur{border-color:var(--amber)}
+
+  .hint-line{margin-top:26px;font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--faint);line-height:2}
+
+  footer{padding:18px;text-align:center;font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--faint);border-top:1px solid var(--line)}
+
+  /* ── 遮罩（暫停 / 通關 / toast）── */
+  .overlay{position:fixed;inset:0;z-index:60;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:22px;text-align:center;padding:24px;animation:fadeIn .3s ease}
+  .overlay h2{font-size:clamp(28px,6vw,44px);font-weight:200;letter-spacing:.14em}
+  .overlay h2 b{color:var(--amber);font-weight:700}
+  .overlay .stats{font-family:var(--mono);font-size:12px;letter-spacing:.14em;color:var(--muted);line-height:2.2}
+  .overlay .stats b{color:var(--ink)}
+  .overlay .actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .rec-line{font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:.14em}
+
+  #toast{position:fixed;left:50%;bottom:34px;transform:translateX(-50%) translateY(10px);z-index:80;font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:#0d0d11;background:var(--amber);padding:9px 16px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @media (pointer:coarse){ .btn{padding:11px 15px} .lvl{padding:18px 8px 14px} }
+  @media (max-width:560px){ .hud .hide-m{display:none} .tag{display:none} }
+  @media (prefers-reduced-motion:reduce){ *{animation-duration:.001s!important;transition-duration:.001s!important} }
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div>
+      <span class="wordmark">P<i>A</i>IR</span>
+      <span class="tag">對對相連 · 找一對，連一條線</span>
+    </div>
+    <div class="hud" id="hudGame" hidden>
+      <span>Lv <b id="hLv">1</b></span><span class="sep">·</span>
+      <span class="hide-m">計時 <b id="hTime">00:00</b></span><span class="sep hide-m">·</span>
+      <span>步數 <b id="hMoves">0</b></span><span class="sep">·</span>
+      <span>剩餘 <b id="hLeft">0</b></span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- 選關 -->
+  <section id="viewMenu" class="shell center-wrap">
+    <div class="hero-title">P<b>A</b>IR</div>
+    <p class="hero-sub">找一對，連一條線。清空棋盤，進入下一關。</p>
+    <p class="hero-en">Find the pair · Draw the line · Clear the board</p>
+    <div class="k">選擇關卡</div>
+    <div class="levels" id="levelList"></div>
+    <p class="hint-line">提示 ＋10 秒 · 洗牌 ＋15 秒 · 可復原上一步</p>
+  </section>
+
+  <!-- 遊戲 -->
+  <section id="viewGame" class="shell" hidden>
+    <div class="toolbar">
+      <button class="btn small" id="btnMenu">← 選關</button>
+      <span class="spacer"></span>
+      <button class="btn small" id="btnHint">提示 ＋10s</button>
+      <button class="btn small" id="btnShuffle">洗牌 ＋15s</button>
+      <button class="btn small" id="btnUndo">復原</button>
+      <button class="btn small" id="btnPause">暫停</button>
+      <button class="btn small" id="btnRestart">重開</button>
+    </div>
+    <div class="board-wrap">
+      <div class="board" id="board"></div>
+      <svg class="tile-line" id="lineSvg" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
+    </div>
+  </section>
+</main>
+
+<footer>© WAHSUN · PAIR</footer>
+
+<!-- 暫停遮罩 -->
+<div class="overlay" id="pauseOverlay" hidden>
+  <h2>暫停</h2>
+  <div class="actions">
+    <button class="btn primary" id="btnResume">繼續</button>
+    <button class="btn" id="btnRestart2">重開本關</button>
+    <button class="btn" id="btnQuit">回選關</button>
+  </div>
+</div>
+
+<!-- 通關遮罩 -->
+<div class="overlay" id="clearOverlay" hidden>
+  <h2 id="clearTitle">LINK CLEAR</h2>
+  <div class="stats" id="clearStats"></div>
+  <div class="rec-line" id="clearRec" hidden></div>
+  <div class="actions">
+    <button class="btn primary" id="btnNext">下一關 →</button>
+    <button class="btn" id="btnReplay">重玩本關</button>
+    <button class="btn" id="btnQuit2">回選關</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+"use strict";
+/* ============================================================
+   PAIR — 連連看引擎（純函數；Node 可測）
+   棋盤 = (cols+2) × (rows+2)，外圈 1 格空槽；內層放滿棋子
+   ============================================================ */
+const LEVELS = [
+  { rows: 4, cols: 4 }, // 8 對
+  { rows: 4, cols: 5 }, // 10
+  { rows: 4, cols: 6 }, // 12
+  { rows: 4, cols: 7 }, // 14
+  { rows: 4, cols: 8 }, // 16
+  { rows: 6, cols: 6 }, // 18
+  { rows: 5, cols: 8 }, // 20
+  { rows: 6, cols: 8 }, // 24（最終關）
+];
+const GLYPHS = [
+  "M12 4.5 A7.5 7.5 0 1 1 11.99 4.5",                      // 01 ring
+  "M12 4.5 A7.5 7.5 0 1 1 11.99 4.5Z",                      // 02 disc（填滿）
+  "M5.5 5.5 H18.5 V18.5 H5.5 Z",                            // 03 square
+  "M5.5 5.5 H18.5 V18.5 H5.5 Z",                            // 04 square-solid
+  "M12 4 L20 12 L12 20 L4 12 Z",                            // 05 diamond
+  "M12 4 L20 12 L12 20 L4 12 Z",                            // 06 diamond-solid
+  "M12 4.6 L20.4 17.8 H3.6 Z",                              // 07 tri-up
+  "M12 4.6 L20.4 17.8 H3.6 Z",                              // 08 tri-up-solid
+  "M12 19.4 L3.6 6.2 H20.4 Z",                              // 09 tri-down
+  "M12 19.4 L3.6 6.2 H20.4 Z",                              // 10 tri-down-solid
+  "M12 4.5 V19.5 M4.5 12 H19.5",                            // 11 plus
+  "M6.2 6.2 L17.8 17.8 M17.8 6.2 L6.2 17.8",                // 12 x
+  "M12 4 L13.7 10.3 L20 12 L13.7 13.7 L12 20 L10.3 13.7 L4 12 L10.3 10.3 Z", // 13 spark
+  "M12 3.6 L19.6 7.9 V16.1 L12 20.4 L4.4 16.1 V7.9 Z",      // 14 hexagon
+  "M12 3.8 L20.2 10.1 L17.1 19.4 H6.9 L3.8 10.1 Z",         // 15 pentagon
+  "M5.5 16.5 A6.5 6.5 0 0 1 18.5 16.5",                     // 16 arc up
+  "M6 14.5 A6 6 0 0 0 18 14.5",                             // 17 arc down
+  "M6 15 L12 9 L18 15",                                     // 18 chevron up
+  "M6 9 L12 15 L18 9",                                      // 19 chevron down
+  "M9 6 L15 12 L9 18",                                      // 20 chevron right
+  "M15 6 L9 12 L15 18",                                     // 21 chevron left
+  "M5.5 19 V7.5 C5.5 6.4 6.4 5.5 7.5 5.5 H18.5",            // 22 L-bracket
+  "M19 12 H6 M11.5 7 L6.5 12 L11.5 17",                     // 23 arrow right
+  "M12 4 V20 M17 9 L12 4 L7 9",                             // 24 pin-up
+];
+const FILL_GLYPHS = new Set([1, 3, 5, 7, 9]);               // 0-based：disc/sqr/dia/triUp/triDown 填滿版
+const PALETTE = ["#ffb84d", "#ff8a7a", "#7ec8ff", "#7ee0a3", "#d7a1ff", "#ff9ecb", "#ffe066", "#8fe8e0", "#9fb8ff", "#ff9e5e"];
+
+const Store = {
+  key: "pair-wahsun-v1",
+  read() { try { return JSON.parse(localStorage.getItem(this.key)) || {}; } catch (e) { return {}; } },
+  write(d) { try { localStorage.setItem(this.key, JSON.stringify(d)); } catch (e) {} },
+};
+const Progress = {
+  load() { return Object.assign({ unlocked: 1, best: {} }, Store.read()); },
+  save(p) { Store.write(p); },
+};
+
+function shuffleArr(a) { for (let i = a.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+/* board: rows×cols of pair id or null；render 時外圈空 */
+function makeBoard(rows, cols) {
+  const ids = [];
+  for (let i = 0; i < (rows * cols) / 2; i++) ids.push(i, i);
+  shuffleArr(ids);
+  const b = [];
+  for (let r = 0; r < rows; r++) { b.push(ids.slice(r * cols, r * cols + cols)); }
+  return b;
+}
+
+/* 連通判定：tile 網格含外圈。occ(r,c)=true 表示有棋子擋路（端點除外）。turns ≤ 2 */
+function canConnect(board, aR, aC, bR, bC) {
+  const R = board.length, C = board[0].length;
+  if (aR === bR && aC === bC) return null;
+  const occupied = (r, c) => r < 0 || c < 0 || r >= R || c >= C || board[r][c] !== null;
+  if (occupied(aR, aC) === false || occupied(bR, bC) === false) return null; // 端點必須有棋
+  const isTarget = (r, c) => r === bR && c === bC;
+  const pass = (r, c) => r >= 0 && c >= 0 && r < R && c < C && (!occupied(r, c) || isTarget(r, c));
+  // BFS: state r,c,dir(0..3),turns；記錄到該格某方向的最小轉彎數
+  const DIR = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+  const best = Array.from({ length: R }, () => Array.from({ length: C }, () => [9, 9, 9, 9]));
+  const q = [[aR, aC, -1, 0]];
+  while (q.length) {
+    const [r, c, dir, turns] = q.shift();
+    if (r === bR && c === bC) return turns; // 到達
+    for (let d = 0; d < 4; d++) {
+      const nr = r + DIR[d][0], nc = c + DIR[d][1];
+      if (!pass(nr, nc)) continue;
+      const nt = dir === -1 || dir === d ? turns : turns + 1;
+      if (nt > 2) continue;
+      if (nt >= best[nr][nc][d]) continue;
+      best[nr][nc][d] = nt;
+      q.push([nr, nc, d, nt]);
+    }
+  }
+  return null;
+}
+
+/* 找出全部棋子位置: Map pairId -> [{r,c},...] */
+function positions(board) {
+  const m = new Map();
+  for (let r = 0; r < board.length; r++)
+    for (let c = 0; c < board[r].length; c++)
+      if (board[r][c] !== null) {
+        if (!m.has(board[r][c])) m.set(board[r][c], []);
+        m.get(board[r][c]).push({ r, c });
+      }
+  return m;
+}
+
+/* 是否存在可消對；回傳 [A,B] 或 null */
+function findMove(board) {
+  const pos = positions(board);
+  for (const [id, cells] of pos) {
+    if (cells.length < 2) continue;
+    for (let i = 0; i < cells.length; i++)
+      for (let j = i + 1; j < cells.length; j++)
+        if (canConnect(board, cells[i].r, cells[i].c, cells[j].r, cells[j].c) !== null)
+          return [cells[i], cells[j]];
+  }
+  return null;
+}
+
+/* 洗牌：全部剩餘棋子＋內層空格一起重排（外圈空槽不動），直到存在可消對且佈局真的變了 */
+function reshuffle(board) {
+  const R = board.length, C = board[0].length;
+  const inner = [];
+  for (let r = 1; r <= R - 2; r++) for (let c = 1; c <= C - 2; c++) inner.push({ r, c });
+  const pos = positions(board);
+  const ids = [];
+  for (const [id, cells] of pos) for (const p of cells) ids.push(id);
+  if (!ids.length) return board;
+  for (let attempt = 0; attempt < 150; attempt++) {
+    shuffleArr(ids);
+    const cells = shuffleArr(inner.slice());
+    const nb = board.map(row => row.slice());
+    for (let r = 1; r <= R - 2; r++) for (let c = 1; c <= C - 2; c++) nb[r][c] = null;
+    for (let i = 0; i < ids.length; i++) nb[cells[i].r][cells[i].c] = ids[i];
+    // 佈局是否真的變了
+    let same = true;
+    for (let r = 1; r <= R - 2 && same; r++)
+      for (let c = 1; c <= C - 2; c++)
+        if (nb[r][c] !== board[r][c]) { same = false; break; }
+    if (same) continue;
+    if (findMove(nb)) return nb;
+  }
+  return board;
+}
+
+/* Node 測試鉤子 */
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = { LEVELS, GLYPHS, makeBoard, canConnect, positions, findMove, reshuffle, shuffleArr };
+}
+
+/* ============================================================
+   UI
+   ============================================================ */
+const $ = (id) => document.getElementById(id);
+const boardEl = $("board"), lineSvg = $("lineSvg");
+const viewMenu = $("viewMenu"), viewGame = $("viewGame"), hudGame = $("hudGame");
+let progress = Progress.load();
+let state = null; // {lv,rows,cols,board,sel,history,moves,startAt,paused,elapsed}
+
+function toast(msg) {
+  const t = $("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 1600);
+}
+
+function fmtTime(sec) {
+  const m = (sec / 60) | 0, s = sec % 60;
+  return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+}
+
+function svgFor(id) {
+  const fill = FILL_GLYPHS.has(id);
+  const d = GLYPHS[id % GLYPHS.length];
+  const col = PALETTE[id % PALETTE.length];
+  const svg = `<svg viewBox="0 0 24 24" style="color:${col}" aria-hidden="true">` +
+    `<path d="${d}" ${fill ? "fill=\"currentColor\" stroke=\"none\"" : "fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\""}/></svg>`;
+  return svg;
+}
+
+/* 渲染選關 */
+function renderLevels() {
+  const wrap = $("levelList"); wrap.innerHTML = "";
+  LEVELS.forEach((L, i) => {
+    const lv = i + 1;
+    const pairs = (L.rows * L.cols) / 2;
+    const b = document.createElement("button");
+    b.className = "lvl" + (lv > progress.unlocked ? " locked" : "") + (lv === progress.unlocked ? " cur" : "");
+    b.innerHTML = `<div class="n">${lv}</div><div class="meta">${L.rows}×${L.cols} · ${pairs} 對</div><div class="best"></div>`;
+    const best = progress.best[lv];
+    if (best) b.querySelector(".best").textContent = `最佳 ${best.time} · ${best.moves} 步`;
+    b.addEventListener("click", () => startLevel(i));
+    wrap.appendChild(b);
+  });
+}
+
+/* 進入一關 */
+function startLevel(lvIdx) {
+  const L = LEVELS[lvIdx];
+  const rows = L.rows + 2, cols = L.cols + 2;
+  const inner = makeBoard(L.rows, L.cols);
+  const board = Array.from({ length: rows }, (_, r) =>
+    Array.from({ length: cols }, (_, c) => (r >= 1 && r <= L.rows && c >= 1 && c <= L.cols ? inner[r - 1][c - 1] : null))
+  );
+  for (let t = 0; t < 6 && !findMove(board); t++) board = reshuffle(board);
+  state = {
+    lv: lvIdx + 1, rows, cols, board,
+    sel: null, history: [], moves: 0, startAt: Date.now(),
+    paused: false, elapsed: 0, hintPair: null, cleared: false,
+  };
+  viewMenu.hidden = true; viewGame.hidden = false; hudGame.hidden = false;
+  $("pauseOverlay").hidden = true; $("clearOverlay").hidden = true;
+  renderBoard(); renderHud();
+  if (!findMove(board)) { toast("無可消對，自動重排"); state.board = reshuffle(state.board); renderBoard(); }
+}
+
+function elapsedSec() {
+  if (!state) return 0;
+  return state.elapsed + (state.paused ? 0 : (Date.now() - state.startAt) / 1000);
+}
+
+function renderHud() {
+  if (!state) return;
+  const left = countLeft(state.board);
+  $("hLv").textContent = state.lv;
+  $("hTime").textContent = fmtTime(elapsedSec() | 0);
+  $("hMoves").textContent = state.moves;
+  $("hLeft").textContent = left;
+}
+function countLeft(board) {
+  let n = 0;
+  for (const row of board) for (const v of row) if (v !== null) n++;
+  return n / 2;
+}
+
+function cellSize() {
+  const wrapW = Math.min(window.innerWidth - 36, 860 - 36);
+  const avail = Math.min(wrapW, (window.innerHeight * 0.62));
+  return Math.max(30, Math.min(58, Math.floor(avail / state.cols)));
+}
+
+/* 渲染棋盤 */
+function renderBoard() {
+  const size = cellSize();
+  const { rows, cols } = state;
+  boardEl.style.gridTemplateColumns = `repeat(${cols}, ${size}px)`;
+  boardEl.style.gridTemplateRows = `repeat(${rows}, ${size}px)`;
+  lineSvg.style.width = cols * size + "px";
+  lineSvg.style.height = rows * size + "px";
+  boardEl.innerHTML = "";
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const v = state.board[r][c];
+      const cell = document.createElement("button");
+      cell.className = "cell" + (v === null ? " ghost" : "");
+      cell.dataset.r = r; cell.dataset.c = c;
+      if (v !== null) {
+        cell.innerHTML = `<span class="inner">${svgFor(v)}</span>`;
+        cell.addEventListener("click", () => onCell(r, c));
+        if (state.sel && state.sel.r === r && state.sel.c === c) cell.classList.add("sel");
+      }
+      boardEl.appendChild(cell);
+    }
+  }
+  if (state.hintPair) {
+    for (const p of state.hintPair) {
+      const el = boardEl.querySelector(`.cell[data-r="${p.r}"][data-c="${p.c}"]`);
+      if (el) el.classList.add("hint");
+    }
+  }
+  drawLine(null);
+}
+
+/* 依格心畫連接線（座標以 cell 為單位，含外圈） */
+function drawLine(path) {
+  const svg = lineSvg;
+  svg.innerHTML = "";
+  if (!path || path.length < 2) return;
+  const s = 1 / state.cols; // 用比例座標：viewBox 100×100 → 每個 cell = 100/cols
+  const cx = (c) => ((c + 0.5) * 100) / state.cols;
+  const cy = (r) => ((r + 0.5) * 100) / state.rows;
+  const pts = path.map((p, i) => `${i ? "L" : "M"}${cx(p.c).toFixed(2)} ${cy(p.r).toFixed(2)}`).join(" ");
+  svg.innerHTML = `<polyline points="${path.map(p => cx(p.c).toFixed(2) + "," + cy(p.r).toFixed(2)).join(" ")}" />`;
+}
+
+function onCell(r, c) {
+  if (!state || state.paused || state.cleared) return;
+  const v = state.board[r][c];
+  if (v === null) return;
+  clearHint();
+  if (!state.sel) {
+    state.sel = { r, c };
+    renderBoard();
+    return;
+  }
+  const s = state.sel;
+  if (s.r === r && s.c === c) { state.sel = null; renderBoard(); return; }
+  state.sel = null;
+  const path = pathCells(state.board, s.r, s.c, r, c);
+  if (v === state.board[s.r][s.c] && path) {
+    removePair(s, { r, c }, path);
+  } else {
+    flashInvalid(r, c);
+    renderBoard();
+  }
+}
+
+/* 回傳 [起點, 轉折點…, 終點] 的格子路徑；找不到回 null */
+function pathCells(board, aR, aC, bR, bC) {
+  // BFS 重建路徑（turns ≤ 2）
+  const R = board.length, C = board[0].length;
+  const occupied = (r, c) => r < 0 || c < 0 || r >= R || c >= C || board[r][c] !== null;
+  const isTarget = (r, c) => r === bR && c === bC;
+  const pass = (r, c) => r >= 0 && c >= 0 && r < R && c < C && (!occupied(r, c) || isTarget(r, c));
+  const DIR = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+  const best = Array.from({ length: R }, () => Array.from({ length: C }, () => [9, 9, 9, 9]));
+  const prev = Array.from({ length: R }, () => Array.from({ length: C }, () => Array(4).fill(null)));
+  const q = [[aR, aC, -1, 0]];
+  let found = null;
+  while (q.length) {
+    const [r, c, dir, turns] = q.shift();
+    if (r === bR && c === bC) { found = [r, c, dir, turns]; break; }
+    for (let d = 0; d < 4; d++) {
+      const nr = r + DIR[d][0], nc = c + DIR[d][1];
+      if (!pass(nr, nc)) continue;
+      const nt = dir === -1 || dir === d ? turns : turns + 1;
+      if (nt > 2) continue;
+      if (nt >= best[nr][nc][d]) continue;
+      best[nr][nc][d] = nt;
+      prev[nr][nc][d] = [r, c, dir];
+      q.push([nr, nc, d, nt]);
+    }
+  }
+  if (!found) return null;
+  const path = [{ r: bR, c: bC }];
+  let [r, c, d] = found;
+  while (!(r === aR && c === aC)) {
+    const p = prev[r][c][d];
+    path.push({ r: p[0], c: p[1] });
+    d = p[2]; r = p[0]; c = p[1];
+  }
+  path.reverse();
+  return path;
+}
+
+function removePair(a, b, path) {
+  state.history.push({ a: { ...a }, b: { ...b }, id: state.board[a.r][a.c] });
+  drawLine(path.map(p => ({ r: p.r, c: p.c })));
+  state.board[a.r][a.c] = null;
+  state.board[b.r][b.c] = null;
+  state.moves++;
+  state.sel = null;
+  clearHint();
+  // 消除動畫：讓兩格原地淡出，延遲後才重建棋盤（避免動畫被 innerHTML 清掉）
+  const mark = (p) => {
+    const el = boardEl.querySelector(`.cell[data-r="${p.r}"][data-c="${p.c}"]`);
+    if (el) { el.classList.add("clearing"); el.classList.remove("sel", "hint"); }
+  };
+  mark(a); mark(b);
+  renderHud();
+  const left = countLeft(state.board);
+  if (left === 0) {
+    setTimeout(() => { lineSvg.innerHTML = ""; renderBoard(); win(); }, 460);
+    return;
+  }
+  setTimeout(() => {
+    drawLine(null);
+    renderBoard();
+    if (!findMove(state.board)) {
+      state.board = reshuffle(state.board);
+      renderBoard();
+      toast("無可消對 — 已自動重排");
+    }
+  }, 430);
+}
+
+function flashInvalid(r, c) {
+  const el = boardEl.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
+  if (!el) return;
+  el.style.transition = "none";
+  el.style.boxShadow = "inset 0 0 0 2px var(--danger)";
+  setTimeout(() => { el.style.transition = ""; el.style.boxShadow = ""; }, 240);
+}
+
+function clearHint() { if (state && state.hintPair) { state.hintPair = null; } }
+
+function win() {
+  state.cleared = true;
+  const t = fmtTime(elapsedSec() | 0);
+  const b = progress.best[state.lv];
+  const isRec = !b || elapsedSec() < timeToSec(b.time) || (elapsedSec() <= timeToSec(b.time) && state.moves < b.moves);
+  if (!b || isRec) {
+    progress.best[state.lv] = { time: t, moves: state.moves };
+  }
+  if (state.lv === progress.unlocked && state.lv < LEVELS.length) progress.unlocked = state.lv + 1;
+  Progress.save(progress);
+  $("clearTitle").innerHTML = state.lv === LEVELS.length ? "ALL CLEAR" : "LINK CLEAR";
+  $("clearStats").innerHTML = `用時 <b>${t}</b> · 步數 <b>${state.moves}</b>`;
+  const rec = $("clearRec");
+  if (isRec && state.lv < LEVELS.length) { rec.hidden = false; rec.textContent = "新紀錄 ✓"; }
+  else rec.hidden = true;
+  const nextBtn = $("btnNext");
+  nextBtn.hidden = state.lv >= LEVELS.length;
+  nextBtn.textContent = "下一關 →";
+  $("clearOverlay").hidden = false;
+}
+function timeToSec(s) { const [m, ss] = s.split(":").map(Number); return m * 60 + ss; }
+
+/* 計時器 */
+setInterval(() => { if (state && !state.paused && !state.cleared && !viewGame.hidden) renderHud(); }, 1000);
+
+/* 按鈕 */
+$("btnMenu").addEventListener("click", goMenu);
+$("btnQuit").addEventListener("click", goMenu);
+$("btnQuit2").addEventListener("click", goMenu);
+function goMenu() {
+  state = null;
+  $("pauseOverlay").hidden = true; $("clearOverlay").hidden = true;
+  viewGame.hidden = true; hudGame.hidden = true; viewMenu.hidden = false;
+  renderLevels();
+}
+$("btnRestart").addEventListener("click", () => { if (state) startLevel(state.lv - 1); });
+$("btnRestart2").addEventListener("click", () => { if (state) startLevel(state.lv - 1); });
+$("btnPause").addEventListener("click", () => {
+  if (!state || state.cleared) return;
+  state.paused = true; state.elapsed += (Date.now() - state.startAt) / 1000;
+  $("pauseOverlay").hidden = false;
+});
+$("btnResume").addEventListener("click", () => {
+  if (!state) return;
+  state.paused = false; state.startAt = Date.now();
+  $("pauseOverlay").hidden = true;
+  renderHud();
+});
+$("btnNext").addEventListener("click", () => { if (state) startLevel(state.lv); });
+$("btnReplay").addEventListener("click", () => { if (state) startLevel(state.lv - 1); });
+$("btnUndo").addEventListener("click", () => {
+  if (!state || !state.history.length || state.cleared) return;
+  const h = state.history.pop();
+  state.board[h.a.r][h.a.c] = h.id;
+  state.board[h.b.r][h.b.c] = h.id;
+  state.moves = Math.max(0, state.moves - 1);
+  clearHint();
+  renderBoard(); renderHud();
+  toast("已復原上一步");
+});
+$("btnHint").addEventListener("click", () => {
+  if (!state || state.cleared) return;
+  const mv = findMove(state.board);
+  if (!mv) { toast("暫時沒有可消對"); return; }
+  state.hintPair = mv;
+  state.elapsed += 10;
+  renderBoard(); renderHud();
+  toast("提示 ＋10 秒");
+});
+$("btnShuffle").addEventListener("click", () => {
+  if (!state || state.cleared) return;
+  state.board = reshuffle(state.board);
+  state.elapsed += 15;
+  clearHint();
+  renderBoard(); renderHud();
+  toast("洗牌 ＋15 秒");
+});
+
+window.addEventListener("resize", () => { if (state && !viewGame.hidden) { renderBoard(); } });
+window.__PAIR_DEBUG = { get state() { return state; }, LEVELS, canConnect, findMove, pathCells };
+
+renderLevels();
+</script>
+</body>
+</html>
