@@ -1,17 +1,17 @@
 <!doctype html>
-<html lang="zh-Hant">
+<html lang="zh-CN">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, maximum-scale=1" />
 <meta name="theme-color" content="#0d0d11" />
-<title>PAIR — 對對相連 · 找一對，連一條線</title>
+<title>PAIR — 对对相连 · 找一对，连一条线</title>
 <style>
   :root{
     --bg:#0d0d11; --panel:#15151b; --panel2:#1c1c24; --ink:#e9e6df;
     --muted:#8b8a94; --faint:#55545e; --line:rgba(233,230,223,.14); --line2:rgba(233,230,223,.26);
     --amber:#ffb84d; --ok:#7ee0a3; --danger:#ff7d6e;
     --mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,monospace;
-    --sans:-apple-system,BlinkMacSystemFont,"PingFang TC","PingFang SC","Hiragino Sans GB","Microsoft JhengHei","Noto Sans TC",sans-serif;
+    --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","PingFang TC","Hiragino Sans GB","Microsoft YaHei","Microsoft JhengHei","Noto Sans SC","Noto Sans TC",sans-serif;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   [hidden]{display:none!important}
@@ -30,6 +30,10 @@
   .hud{display:flex;align-items:center;gap:14px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--muted)}
   .hud b{color:var(--ink);font-weight:600}
   .hud .sep{opacity:.4}
+  .top-right{display:flex;align-items:center;gap:12px;flex-shrink:0}
+  .langbtn{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:7px 9px;line-height:1;border:1px solid var(--line2);color:var(--muted);transition:color .2s,border-color .2s;user-select:none}
+  .langbtn:hover{color:var(--ink);border-color:var(--amber)}
+  .overlay .corner-lang{position:absolute;top:max(16px,env(safe-area-inset-top));right:max(18px,env(safe-area-inset-right))}
 
   main{flex:1;display:flex;flex-direction:column}
   .shell{width:100%;max-width:860px;margin:0 auto;padding:18px 18px 40px;display:flex;flex-direction:column;flex:1}
@@ -155,6 +159,10 @@
     footer{display:none}
   }
   @media (prefers-reduced-motion:reduce){ *{animation-duration:.001s!important;transition-duration:.001s!important} }
+  /* EN 模式下英文較寬：微調密排，避免溢出 */
+  html[data-lang="en"] .lvl .meta,html[data-lang="en"] .lvl .best{letter-spacing:.03em;font-size:8px}
+  html[data-lang="en"] .hint-line,html[data-lang="en"] .hero-en{letter-spacing:.14em}
+  html[data-lang="en"] .daily .dm{letter-spacing:.1em}
 </style>
 </head>
 <body>
@@ -162,13 +170,16 @@
   <div class="top">
     <div>
       <span class="wordmark">P<i>A</i>IR</span>
-      <span class="tag">對對相連 · 找一對，連一條線</span>
+      <span class="tag">对对相连 · 找一对，连一条线</span>
     </div>
-    <div class="hud" id="hudGame" hidden>
-      <span>Lv <b id="hLv">1</b></span><span class="sep">·</span>
-      <span class="hide-m">計時 <b id="hTime">00:00</b></span><span class="sep hide-m">·</span>
-      <span>步數 <b id="hMoves">0</b></span><span class="sep">·</span>
-      <span>剩餘 <b id="hLeft">0</b></span>
+    <div class="top-right">
+      <div class="hud" id="hudGame" hidden>
+        <span>Lv <b id="hLv">1</b></span><span class="sep">·</span>
+        <span class="hide-m"><span class="lbl">计时</span> <b id="hTime">00:00</b></span><span class="sep hide-m">·</span>
+        <span><span class="lbl">步数</span> <b id="hMoves">0</b></span><span class="sep">·</span>
+        <span><span class="lbl">剩余</span> <b id="hLeft">0</b></span>
+      </div>
+      <button class="langbtn" type="button" data-lang-toggle aria-label="Switch to English">EN</button>
     </div>
   </div>
 </header>
@@ -177,46 +188,46 @@
   <!-- 選關 -->
   <section id="viewMenu" class="shell center-wrap">
     <div class="hero-title">P<b>A</b>IR</div>
-    <p class="hero-sub">找一對，連一條線。清空棋盤，進入下一關。</p>
+    <p class="hero-sub">找一对，连一条线。清空棋盘，进入下一关。</p>
     <p class="hero-en">Find the pair · Draw the line · Clear the board</p>
-    <div class="k">選擇關卡</div>
+    <div class="k">选择关卡</div>
     <div class="levels" id="levelList"></div>
     <div class="daily-row" id="dailyRow" hidden>
       <button class="daily" id="btnDaily" type="button">
         <span>
-          <span class="dh">Today's Grid <i>·</i> 每日一盤</span>
+          <span class="dh">Today's Grid <i>·</i> 每日一盘</span>
           <span class="dm" id="dailyMeta">—</span>
         </span>
         <span class="ds" id="dailyState">—</span>
       </button>
-      <button class="allclear" id="btnAllClear" hidden type="button">✦ 全數清空 — 總覽</button>
+      <button class="allclear" id="btnAllClear" hidden type="button">✦ 全部清空 — 总览</button>
     </div>
-    <p class="hint-line">提示 ＋10 秒 · 洗牌 ＋15 秒 · 可復原上一步</p>
+    <p class="hint-line">提示 ＋10 秒 · 洗牌 ＋15 秒 · 可复原上一步</p>
   </section>
 
-  <!-- 全通總結 -->
+  <!-- 全通总结 -->
   <section id="viewClear" class="shell center-wrap" hidden>
     <p class="k">Record</p>
     <div class="hero-title title-sm">ALL CLEAR<span style="color:var(--amber)">.</span></div>
-    <p class="hero-sub">十四關全部清空 — 這張圖有始有終。</p>
+    <p class="hero-sub">十四关全部清空 — 这张图有始有终。</p>
     <div class="stat-grid" id="clearStatsGrid"></div>
     <p class="clear-note" id="clearNote"></p>
     <div class="actions-row">
-      <button class="btn primary" id="btnClearBack">← 回選關</button>
-      <button class="btn" id="btnClearDaily">每日一盤 →</button>
+      <button class="btn primary" id="btnClearBack">← 回选关</button>
+      <button class="btn" id="btnClearDaily">每日一盘 →</button>
     </div>
   </section>
 
-  <!-- 遊戲 -->
+  <!-- 游戏 -->
   <section id="viewGame" class="shell" hidden>
     <div class="toolbar">
-      <button class="btn small" id="btnMenu">← 選關</button>
+      <button class="btn small" id="btnMenu">← 选关</button>
       <span class="spacer"></span>
       <button class="btn small" id="btnHint">提示 ＋10s</button>
       <button class="btn small" id="btnShuffle">洗牌 ＋15s</button>
-      <button class="btn small" id="btnUndo">復原</button>
-      <button class="btn small" id="btnPause">暫停</button>
-      <button class="btn small" id="btnRestart">重開</button>
+      <button class="btn small" id="btnUndo">复原</button>
+      <button class="btn small" id="btnPause">暂停</button>
+      <button class="btn small" id="btnRestart">重开</button>
     </div>
     <div class="board-wrap">
       <div class="board" id="board"></div>
@@ -227,25 +238,27 @@
 
 <footer>© WAHSUN · PAIR</footer>
 
-<!-- 暫停遮罩 -->
+<!-- 暂停遮罩 -->
 <div class="overlay" id="pauseOverlay" hidden>
-  <h2>暫停</h2>
+  <button class="langbtn corner-lang" type="button" data-lang-toggle aria-label="Switch to English">EN</button>
+  <h2>暂停</h2>
   <div class="actions">
-    <button class="btn primary" id="btnResume">繼續</button>
-    <button class="btn" id="btnRestart2">重開本關</button>
-    <button class="btn" id="btnQuit">回選關</button>
+    <button class="btn primary" id="btnResume">继续</button>
+    <button class="btn" id="btnRestart2">重开本关</button>
+    <button class="btn" id="btnQuit">回选关</button>
   </div>
 </div>
 
-<!-- 通關遮罩 -->
+<!-- 通关遮罩 -->
 <div class="overlay" id="clearOverlay" hidden>
+  <button class="langbtn corner-lang" type="button" data-lang-toggle aria-label="Switch to English">EN</button>
   <h2 id="clearTitle">LINK CLEAR</h2>
   <div class="stats" id="clearStats"></div>
   <div class="rec-line" id="clearRec" hidden></div>
   <div class="actions">
-    <button class="btn primary" id="btnNext">下一關 →</button>
-    <button class="btn" id="btnReplay">重玩本關</button>
-    <button class="btn" id="btnQuit2">回選關</button>
+    <button class="btn primary" id="btnNext">下一关 →</button>
+    <button class="btn" id="btnReplay">重玩本关</button>
+    <button class="btn" id="btnQuit2">回选关</button>
   </div>
 </div>
 
@@ -438,6 +451,166 @@ if (typeof module !== "undefined" && module.exports) {
 const $ = (id) => document.getElementById(id);
 
 /* ============================================================
+   i18n (简体中文 ↔ English) — mirror of the WAHSUN/UNFOLD engine.
+   Simplified Chinese is the DOM source; static leaves snapshotted
+   at load; EN dictionary keyed by the zh text; dynamic game text
+   looks up I18N.s() at render time and re-renders on 'pair:lang'.
+   ============================================================ */
+(function () {
+  'use strict';
+  var LS = 'pair-lang';
+  var lang = 'zh';
+  try { if (localStorage.getItem(LS) === 'en') lang = 'en'; } catch (e) {}
+
+  /* ---------- EN dictionary: 简体中文 text -> English ---------- */
+  var EN = {
+    /* header */
+    '对对相连 · 找一对，连一条线': 'Match a pair · Link a line',
+    /* hud labels */
+    '计时': 'Time', '步数': 'Moves', '剩余': 'Left',
+    /* menu */
+    '找一对，连一条线。清空棋盘，进入下一关。': 'Find a pair and draw a line. Clear the board to advance.',
+    '选择关卡': 'Select level',
+    '✦ 全部清空 — 总览': '✦ All clear — summary',
+    '提示 ＋10 秒 · 洗牌 ＋15 秒 · 可复原上一步': 'Hint +10 sec · Shuffle +15 sec · Undo last move',
+    /* all-clear view */
+    '十四关全部清空 — 这张图有始有终。': 'All 14 boards cleared — the pattern is complete.',
+    '← 回选关': '← Levels',
+    '每日一盘 →': 'Daily →',
+    /* game toolbar */
+    '← 选关': '← Levels',
+    '提示 ＋10s': 'Hint +10s',
+    '洗牌 ＋15s': 'Shuffle +15s',
+    '复原': 'Undo',
+    '暂停': 'Pause',
+    '重开': 'Restart',
+    /* pause overlay */
+    '继续': 'Resume',
+    '重开本关': 'Restart level',
+    '回选关': 'Back to levels',
+    /* clear overlay */
+    '下一关 →': 'Next →',
+    '重玩本关': 'Replay level',
+    /* toasts */
+    '无可消对，自动重排': 'No moves — auto reshuffled',
+    '无可消对 — 已自动重排': 'No moves — board reshuffled',
+    '已复原上一步': 'Last move undone',
+    '暂时没有可消对': 'No valid pairs right now',
+    '提示 ＋10 秒': 'Hint +10 sec',
+    '洗牌 ＋15 秒': 'Shuffle +15 sec',
+    /* win / daily */
+    '重玩本盘': 'Replay board',
+    '新纪录 ✓': 'New record ✓',
+    '完成': 'Done',
+    '未完成': 'Not yet',
+    /* stats labels */
+    '总对数': 'Total pairs',
+    '最快一关': 'Fastest level',
+    '最少步数': 'Fewest moves',
+    '最佳总用时': 'Best total time',
+    '各关独立最佳之和': 'sum of per-level bests',
+    '最佳以各关独立纪录计算 — 最快与最少步未必同场达成。': 'Records are tracked per level — the fastest time and fewest moves may not come from the same playthrough.'
+  };
+
+  /* ---------- structured / mixed-content overrides ---------- */
+  var specs = [];          // { el, zh, en }
+  function special(sel, enHtml) {
+    var nodes = document.querySelectorAll(sel);
+    for (var i = 0; i < nodes.length; i++) {
+      var n = nodes[i];
+      specs.push({ el: n, zh: n.innerHTML, en: enHtml });
+    }
+  }
+  special('.daily .dh', 'Daily Grid');
+  special('#pauseOverlay h2', 'Paused');
+
+  /* meta / title originals (zh) */
+  var zhTitle = (document.querySelector('title') || {}).textContent || '';
+
+  /* leaves: static text-only nodes whose zh text hits the dict.
+     #pauseOverlay h2 ('暂停') is excluded — the pause *button* maps
+     to 'Pause' while the overlay heading needs 'Paused'. */
+  var leaves = [];
+  var all = document.querySelectorAll('*');
+  for (var i = 0; i < all.length; i++) {
+    var el = all[i];
+    if (el.children.length) continue;
+    var tag = el.tagName;
+    if (tag === 'SCRIPT' || tag === 'STYLE') continue;
+    if (el.closest && el.closest('#pauseOverlay h2')) continue;
+    var t = (el.textContent || '').trim();
+    if (!t || !EN[t]) continue;
+    leaves.push({ el: el, zh: el.innerHTML, en: EN[t] });
+  }
+
+  function apply() {
+    var en = lang === 'en';
+    var root = document.documentElement;
+    root.setAttribute('lang', en ? 'en' : 'zh-CN');
+    root.setAttribute('data-lang', en ? 'en' : 'zh');
+
+    var k, o;
+    for (k = 0; k < leaves.length; k++) { o = leaves[k]; o.el.innerHTML = en ? o.en : o.zh; }
+    for (k = 0; k < specs.length; k++) { o = specs[k]; o.el.innerHTML = en ? o.en : o.zh; }
+
+    var tEl = document.querySelector('title');
+    if (tEl) tEl.textContent = en ? 'PAIR — Match a pair · Link a line' : zhTitle;
+
+    /* every toggle button (header + overlay clones): label + aria */
+    Array.prototype.forEach.call(document.querySelectorAll('[data-lang-toggle]'), function (lg) {
+      lg.textContent = en ? '中' : 'EN';
+      lg.setAttribute('aria-label', en ? '切换到简体中文' : 'Switch to English');
+    });
+
+    window.dispatchEvent(new CustomEvent('pair:lang', { detail: { lang: lang } }));
+  }
+
+  function set(next) {
+    if (next !== 'en') next = 'zh';
+    lang = next;
+    try { localStorage.setItem(LS, lang); } catch (e) {}
+    apply();
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll('[data-lang-toggle]'), function (lg) {
+    lg.addEventListener('click', function () { set(lang === 'en' ? 'zh' : 'en'); });
+  });
+
+  window.I18N = {
+    lang: function () { return lang; },
+    set: set,
+    s: function (zhText) { return lang === 'en' ? (EN[zhText] || zhText) : zhText; }
+  };
+  apply();   // initial state (zh default or persisted en)
+})();
+
+/* shorthand for dynamic JS text */
+const TT = (zh) => I18N.s(zh);
+const isEn = () => I18N.lang() === 'en';
+/* parametric formatters */
+function fmtMeta(rows, cols, pairs) {
+  return isEn() ? `${rows}×${cols} · ${pairs} pairs` : `${rows}×${cols} · ${pairs} 对`;
+}
+function fmtBest(t, m) {
+  return isEn() ? `Best ${t} · ${m}` : `最佳 ${t} · ${m} 步`;
+}
+function fmtDailyMeta(stamp) {
+  return isEn() ? `${stamp} · 8×8 · 32 pairs` : `${stamp} · 8×8 · 32 对`;
+}
+function fmtDone(t, m) {
+  return isEn() ? `Done ${t} · ${m} moves` : `完成 ${t} · ${m} 步`;
+}
+function fmtStatsHTML(t, m) {
+  return isEn() ? `Time <b>${t}</b> · Moves <b>${m}</b>` : `用时 <b>${t}</b> · 步数 <b>${m}</b>`;
+}
+function lvlLabel(n) {
+  return isEn() ? `Level ${n}` : `第 ${n} 关`;
+}
+function clearedLabel(cnt) {
+  return isEn() ? `${cnt} levels cleared` : `${cnt} 关全清`;
+}
+
+/* ============================================================
    點擊音效（Web Audio，無素材）
    ============================================================ */
 let actx = null;
@@ -503,9 +676,9 @@ function renderLevels() {
     const pairs = (L.rows * L.cols) / 2;
     const b = document.createElement("button");
     b.className = "lvl" + (lv > progress.unlocked ? " locked" : "") + (lv === progress.unlocked ? " cur" : "");
-    b.innerHTML = `<div class="n">${lv}</div><div class="meta">${L.rows}×${L.cols} · ${pairs} 對</div><div class="best"></div>`;
+    b.innerHTML = `<div class="n">${lv}</div><div class="meta">${fmtMeta(L.rows, L.cols, pairs)}</div><div class="best"></div>`;
     const best = progress.best[lv];
-    if (best) b.querySelector(".best").textContent = `最佳 ${best.time} · ${best.moves} 步`;
+    if (best) b.querySelector(".best").textContent = fmtBest(best.time, best.moves);
     b.addEventListener("click", () => { SFX.tick(); startLevel(i); });
     wrap.appendChild(b);
   });
@@ -529,7 +702,7 @@ function startLevel(lvIdx) {
   viewGame.hidden = false; hudGame.hidden = false;
   $("pauseOverlay").hidden = true; $("clearOverlay").hidden = true;
   renderBoard(); renderHud();
-  if (!findMove(board)) { toast("無可消對，自動重排"); state.board = reshuffle(state.board); renderBoard(); }
+  if (!findMove(board)) { toast(TT("无可消对，自动重排")); state.board = reshuffle(state.board); renderBoard(); }
 }
 
 function elapsedSec() {
@@ -695,7 +868,7 @@ function removePair(a, b, path) {
     if (!findMove(state.board)) {
       state.board = reshuffle(state.board);
       renderBoard();
-      toast("無可消對 — 已自動重排");
+      toast(TT("无可消对 — 已自动重排"));
     }
   }, 430);
 }
@@ -710,10 +883,24 @@ function flashInvalid(r, c) {
 
 function clearHint() { if (state && state.hintPair) { state.hintPair = null; } }
 
+let lastWin = null; // 供語言切換時重繪通關遮罩
+function paintWin() {
+  if (!lastWin) return;
+  const w = lastWin;
+  $("clearTitle").innerHTML = w.title;
+  $("clearStats").innerHTML = fmtStatsHTML(w.t, w.moves);
+  const recEl = $("clearRec");
+  recEl.hidden = !w.isRec;
+  if (w.isRec) recEl.textContent = TT("新纪录 ✓");
+  const nextBtn = $("btnNext");
+  nextBtn.hidden = w.nextHidden;
+  nextBtn.textContent = TT("下一关 →");
+  $("btnReplay").textContent = TT(w.daily ? "重玩本盘" : "重玩本关");
+}
 function win() {
   state.cleared = true;
   const t = fmtTime(elapsedSec() | 0);
-  $("btnReplay").textContent = "重玩本關";
+  $("btnReplay").textContent = TT("重玩本关");
   if (state.daily) {
     const key = String(dailySeed());
     const rec = DailyStore.read();
@@ -721,12 +908,8 @@ function win() {
     const sec = elapsedSec();
     const isRec = !old || sec < old.t || (sec <= old.t && state.moves < old.m);
     if (!old || isRec) { rec[key] = { t: Math.round(sec), m: state.moves }; DailyStore.write(rec); }
-    $("clearTitle").innerHTML = "DAY CLEAR";
-    $("clearStats").innerHTML = `用時 <b>${t}</b> · 步數 <b>${state.moves}</b>`;
-    const recEl = $("clearRec");
-    recEl.hidden = !isRec; if (isRec) recEl.textContent = "新紀錄 ✓";
-    $("btnNext").hidden = true;
-    $("btnReplay").textContent = "重玩本盤";
+    lastWin = { title: "DAY CLEAR", t, moves: state.moves, isRec, daily: true, nextHidden: true };
+    paintWin();
     $("clearOverlay").hidden = false;
     refreshToday();
     return;
@@ -738,14 +921,14 @@ function win() {
   }
   if (state.lv === progress.unlocked && state.lv < LEVELS.length) progress.unlocked = state.lv + 1;
   Progress.save(progress);
-  $("clearTitle").innerHTML = state.lv === LEVELS.length ? "ALL CLEAR" : "LINK CLEAR";
-  $("clearStats").innerHTML = `用時 <b>${t}</b> · 步數 <b>${state.moves}</b>`;
-  const rec = $("clearRec");
-  if (isRec && state.lv < LEVELS.length) { rec.hidden = false; rec.textContent = "新紀錄 ✓"; }
-  else rec.hidden = true;
-  const nextBtn = $("btnNext");
-  nextBtn.hidden = state.lv >= LEVELS.length;
-  nextBtn.textContent = "下一關 →";
+  lastWin = {
+    title: state.lv === LEVELS.length ? "ALL CLEAR" : "LINK CLEAR",
+    t, moves: state.moves,
+    isRec: isRec && state.lv < LEVELS.length,
+    daily: false,
+    nextHidden: state.lv >= LEVELS.length,
+  };
+  paintWin();
   $("clearOverlay").hidden = false;
 }
 function timeToSec(s) { const [m, ss] = s.split(":").map(Number); return m * 60 + ss; }
@@ -803,16 +986,16 @@ function startDaily() {
   viewGame.hidden = false; hudGame.hidden = false;
   $("pauseOverlay").hidden = true; $("clearOverlay").hidden = true;
   renderBoard(); renderHud();
-  if (!findMove(board)) { toast("無可消對，自動重排"); state.board = reshuffle(state.board); renderBoard(); }
+  if (!findMove(board)) { toast(TT("无可消对，自动重排")); state.board = reshuffle(state.board); renderBoard(); }
 }
 function refreshToday() {
   const row = $("dailyRow"); if (!row) return;
   row.hidden = false;
-  $("dailyMeta").textContent = dailyStamp() + " · 8×8 · 32 對";
+  $("dailyMeta").textContent = fmtDailyMeta(dailyStamp());
   const rec = DailyStore.read()[String(dailySeed())];
   const st = $("dailyState"), btn = $("btnDaily");
-  if (rec) { st.textContent = `完成 ${fmtTime(rec.t)} · ${rec.m} 步`; btn.classList.add("done"); }
-  else { st.textContent = "未完成"; btn.classList.remove("done"); }
+  if (rec) { st.textContent = fmtDone(fmtTime(rec.t), rec.m); btn.classList.add("done"); }
+  else { st.textContent = TT("未完成"); btn.classList.remove("done"); }
   const clearedAll = Object.keys(progress.best).length >= LEVELS.length;
   const ac = $("btnAllClear"); if (ac) ac.hidden = !clearedAll;
 }
@@ -829,13 +1012,13 @@ function openClear() {
     if (sec < minT) { minT = sec; minTLv = i + 1; }
     if (b.moves < minM) { minM = b.moves; minMLv = i + 1; }
   });
-  const card = (k, v, u) => `<div class="stat-card"><div class="sk">${k}</div><div class="sv">${v}</div><div class="su">${u}</div></div>`;
+  const card = (k, v, u) => `<div class="stat-card"><div class="sk">${TT(k)}</div><div class="sv">${v}</div><div class="su">${u}</div></div>`;
   grid.innerHTML =
-    card("總對數", sumPairs, cnt + " 關全清") +
-    card("最快一關", minT < 1e9 ? fmtTime(minT) : "—", minTLv ? `第 ${minTLv} 關` : "") +
-    card("最少步數", minM < 1e9 ? minM : "—", minMLv ? `第 ${minMLv} 關` : "") +
-    card("最佳總用時", fmtTime(sumT), "各關獨立最佳之和");
-  $("clearNote").textContent = "最佳以各關獨立紀錄計算 — 最快與最少步未必同場達成。";
+    card("总对数", sumPairs, clearedLabel(cnt)) +
+    card("最快一关", minT < 1e9 ? fmtTime(minT) : "—", minTLv ? lvlLabel(minTLv) : "") +
+    card("最少步数", minM < 1e9 ? minM : "—", minMLv ? lvlLabel(minMLv) : "") +
+    card("最佳总用时", fmtTime(sumT), TT("各关独立最佳之和"));
+  $("clearNote").textContent = TT("最佳以各关独立纪录计算 — 最快与最少步未必同场达成。");
   viewMenu.hidden = true; $("viewClear").hidden = false;
 }
 function restartLevel() { if (state) { state.daily ? startDaily() : startLevel(state.lv - 1); } }
@@ -879,16 +1062,16 @@ $("btnUndo").addEventListener("click", withBtn(() => {
   state.moves = Math.max(0, state.moves - 1);
   clearHint();
   renderBoard(); renderHud();
-  toast("已復原上一步");
+  toast(TT("已复原上一步"));
 }));
 $("btnHint").addEventListener("click", withBtn(() => {
   if (!state || state.cleared) return;
   const mv = findMove(state.board);
-  if (!mv) { toast("暫時沒有可消對"); return; }
+  if (!mv) { toast(TT("暂时没有可消对")); return; }
   state.hintPair = mv;
   state.elapsed += 10;
   renderBoard(); renderHud();
-  toast("提示 ＋10 秒");
+  toast(TT("提示 ＋10 秒"));
 }));
 $("btnShuffle").addEventListener("click", withBtn(() => {
   if (!state || state.cleared) return;
@@ -896,7 +1079,7 @@ $("btnShuffle").addEventListener("click", withBtn(() => {
   state.elapsed += 15;
   clearHint();
   renderBoard(); renderHud();
-  toast("洗牌 ＋15 秒");
+  toast(TT("洗牌 ＋15 秒"));
 }));
 
 $("btnDaily").addEventListener("click", () => { SFX.tick(); startDaily(); });
@@ -907,6 +1090,14 @@ $("btnClearDaily").addEventListener("click", withBtn(() => { $("viewClear").hidd
 window.addEventListener("resize", () => { if (state && !viewGame.hidden) renderBoard(); });
 if (window.visualViewport) window.visualViewport.addEventListener("resize", () => { if (state && !viewGame.hidden) renderBoard(); });
 window.__PAIR_DEBUG = { get state() { return state; }, LEVELS, canConnect, findMove, pathCells, makeDailyBoard, dailySeed };
+
+/* 語言切換後重繪動態內容（靜態葉節點由 i18n 引擎處理） */
+window.addEventListener("pair:lang", () => {
+  if (state && !viewGame.hidden && !$("clearOverlay").hidden && state.cleared) { paintWin(); return; }
+  if (!$("viewClear").hidden) { openClear(); return; }
+  if (!$("viewMenu").hidden || state === null) { renderLevels(); refreshToday(); }
+  if ($("pauseOverlay").hidden === false) { /* 靜態按鈕由引擎葉節點處理 */ }
+});
 
 renderLevels();
 refreshToday();
