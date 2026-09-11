@@ -1,0 +1,5 @@
+# local tooling
+.wrangler/
+
+# OS
+.DS_Store
