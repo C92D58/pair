@@ -66,22 +66,36 @@
   .tile-line polyline{fill:none;stroke:var(--amber);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;opacity:.95}
 
   /* ── 區塊標題 ── */
-  .k{font-family:var(--mono);font-size:10px;letter-spacing:.3em;color:var(--amber);text-transform:uppercase;margin:26px 0 12px}
+  .k{font-family:var(--mono);font-size:10px;letter-spacing:.3em;color:var(--amber);text-transform:uppercase;margin:20px 0 10px}
   .k::before{content:"— ";opacity:.55}
   .center-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:10px 0 30px}
+/* content taller than the viewport must scroll, not clip at the top */
+#viewMenu{overflow-y:auto}
+@supports (justify-content: safe center){ .center-wrap{justify-content: safe center} }
 
   /* ── 主選單 / 選關 ── */
   .hero-title{font-size:clamp(42px,9vw,72px);font-weight:200;letter-spacing:.12em;font-family:var(--sans)}
   .hero-title b{font-weight:700;color:var(--amber)}
   .hero-sub{margin-top:14px;font-size:14px;color:var(--muted);letter-spacing:.06em}
   .hero-en{margin-top:6px;font-family:var(--mono);font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--faint)}
-  .levels{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;width:100%;max-width:560px;margin-top:34px}
+  .levels{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;width:100%;max-width:760px;margin-top:26px}
   .lvl{position:relative;padding:16px 8px 12px;border:1px solid var(--line2);text-align:center;transition:border-color .2s,transform .15s}
   .lvl:hover{border-color:var(--amber);transform:translateY(-2px)}
   .lvl .n{font-family:var(--mono);font-size:22px;font-weight:600;color:var(--ink)}
   .lvl .meta{font-family:var(--mono);font-size:9px;letter-spacing:.18em;color:var(--faint);text-transform:uppercase;margin-top:6px}
   .lvl .best{font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--amber);margin-top:5px;min-height:12px}
-  .lvl.locked{opacity:.38;pointer-events:none}
+  /* ── 等级：称号 + 星级 ─────────────────────────────────────── */
+.rank-line{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--faint);margin:-4px 0 0}
+.rank-line .rl-n{color:var(--amber);letter-spacing:.2em}
+.rank-line .rl-s{color:var(--muted)}
+.rank-line .rl-s b{color:var(--amber);font-weight:600}
+.lvl .st{font-size:11px;letter-spacing:.1em;color:var(--amber);margin-top:4px;line-height:1}
+.lvl .st.none{color:#3a3a3a}
+.lvl.rated{border-color:rgba(255,184,77,.42)}
+.clear-stars{font-size:26px;letter-spacing:.28em;color:var(--amber);margin:4px 0 14px;text-indent:.28em}
+.lvl.locked{opacity:.38;pointer-events:none}
   .lvl.locked::after{content:"🔒";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:16px;filter:grayscale(1)}
   .lvl.cur{border-color:var(--amber)}
 
@@ -137,7 +151,12 @@
     .toolbar{gap:6px;margin:2px 0 12px}
     .toolbar .spacer{display:none}
     .toolbar .btn{flex:0 1 calc((100% - 12px)/3);text-align:center;padding:11px 2px;font-size:10px;white-space:nowrap;overflow:hidden}
-    .levels{gap:8px}
+    .levels{gap:8px;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));margin-top:22px}
+    .lvl{padding:11px 5px 9px}
+    .lvl .n{font-size:18px}
+    .lvl .meta{margin-top:4px}
+    .rank-line{font-size:9px;gap:7px}
+    #viewMenu{padding-bottom:26px}
     .center-wrap{padding:6px 0 18px}
   }
   @media (max-width:380px){
@@ -145,9 +164,28 @@
     .wordmark{font-size:13px;letter-spacing:.18em}
     .hud{gap:8px;font-size:10px}
     .hero-sub{font-size:13px}
+    .levels{grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:6px;margin-top:16px}
+    .lvl{padding:9px 4px 7px}
+    .lvl .n{font-size:16px}
+    .lvl .best{font-size:8px}
+    .clear-stars{font-size:22px}
   }
   /* 矮螢幕（橫屏等）：選單可捲、頂置顯示，藏 footer 騰空間 */
-  @media (max-height:560px){
+  @media (min-width:561px) and (max-height:880px){
+    .center-wrap{padding:4px 0 16px}
+    .hero-title{font-size:clamp(34px,6.2vw,56px)}
+    .hero-sub{margin-top:6px}
+    .k{margin:14px 0 8px}
+    .levels{margin-top:18px;gap:8px}
+    .lvl{padding:12px 6px 10px}
+    .lvl .n{font-size:19px}
+    .lvl .meta{margin-top:4px}
+    .lvl .st{margin-top:2px}
+    .hint-line{margin-top:12px}
+    footer{display:none}
+  }
+
+@media (max-height:560px){
     .shell{overflow-y:auto}
     .center-wrap{justify-content:flex-start;padding-top:8px}
     .hero-title{font-size:38px}
@@ -191,6 +229,7 @@
     <p class="hero-sub">找一对，连一条线。清空棋盘，进入下一关。</p>
     <p class="hero-en">Find the pair · Draw the line · Clear the board</p>
     <div class="k">选择关卡</div>
+    <div class="rank-line" id="rankLine"></div>
     <div class="levels" id="levelList"></div>
     <div class="daily-row" id="dailyRow" hidden>
       <button class="daily" id="btnDaily" type="button">
@@ -209,7 +248,7 @@
   <section id="viewClear" class="shell center-wrap" hidden>
     <p class="k">Record</p>
     <div class="hero-title title-sm">ALL CLEAR<span style="color:var(--amber)">.</span></div>
-    <p class="hero-sub">十四关全部清空 — 这张图有始有终。</p>
+    <p class="hero-sub" id="clearSub">十四关全部清空 — 这张图有始有终。</p>
     <div class="stat-grid" id="clearStatsGrid"></div>
     <p class="clear-note" id="clearNote"></p>
     <div class="actions-row">
@@ -253,6 +292,7 @@
 <div class="overlay" id="clearOverlay" hidden>
   <button class="langbtn corner-lang" type="button" data-lang-toggle aria-label="Switch to English">EN</button>
   <h2 id="clearTitle">LINK CLEAR</h2>
+  <div class="clear-stars" id="clearStars" hidden></div>
   <div class="stats" id="clearStats"></div>
   <div class="rec-line" id="clearRec" hidden></div>
   <div class="actions">
@@ -284,7 +324,12 @@ const LEVELS = [
   { rows: 9, cols: 8 }, // 36
   { rows: 10, cols: 8 }, // 40
   { rows: 7, cols: 12 }, // 42
-  { rows: 8, cols: 12 }, // 48（最終關）
+  { rows: 8, cols: 12 }, // 48
+  { rows: 10, cols: 10 }, // 50
+  { rows: 9, cols: 12 }, // 54
+  { rows: 10, cols: 12 }, // 60
+  { rows: 11, cols: 12 }, // 66
+  { rows: 12, cols: 12 }, // 72（最終關）
 ];
 const GLYPHS = [
   "M12 4.5 A7.5 7.5 0 1 1 11.99 4.5",                      // 01 ring
@@ -335,8 +380,32 @@ const GLYPHS = [
   "M4.5 12 A4 4 0 0 1 8.5 8 H15.5 A4 4 0 0 1 19.5 12 A4 4 0 0 1 15.5 16 H8.5 A4 4 0 0 1 4.5 12 Z", // 46 capsule horizontal
   "M9 6 H7 V18 H9 M15 6 H17 V18 H15",                                          // 47 brackets
   "M3 13 H8 L10.5 7 L13 16 L15.5 10.5 H21",                                    // 48 pulse
+  "M12 5 V19 M8 9 H16 M8 15 H16",                                              // 49 letter-ladder
+  "M4 20 L12 4 L20 20 M8.5 13 H15.5",                                          // 50 peak
+  "M12 4 A8 8 0 0 0 12 20 M12 4 A4 4 0 0 1 12 12 A4 4 0 0 0 12 20 Z",          // 51 leaf
+  "M6 6 H18 M6 18 H18 M6 6 V18 M18 6 V18",                                     // 52 box-frame
+  "M9 4 H15 M12 4 V20 M9 20 H15",                                              // 53 letter-i
+  "M5 5 L12 19 L19 5",                                                         // 54 chevron-deep
+  "M12 4 V9 M12 15 V20 M4 12 H9 M15 12 H20 M6.4 6.4 L9.9 9.9 M14.1 14.1 L17.6 17.6 M17.6 6.4 L14.1 9.9 M9.9 14.1 L6.4 17.6", // 55 asterisk
+  "M4 12 H20 M8 8 V16 M12 7 V17 M16 8 V16",                                    // 56 comb
+  "M12 4 A8 8 0 0 1 20 12 L12 12 Z M12 12 L12 20 A8 8 0 0 0 20 12 Z",          // 57 quarter
+  "M5 19 V13 A7 7 0 0 1 19 13 V19",                                            // 58 arch
+  "M6 12 A6 6 0 1 1 18 12 A6 6 0 1 1 6 12 M12 9 V15 M9 12 H15",                // 59 target-plus
+  "M4 12 C4 7 8 5 12 5 C16 5 20 7 20 12 C20 17 16 19 12 19 C8 19 4 17 4 12 Z M8 12 H16", // 60 eye
+  "M4 18 L12 6 L20 18 M4 18 H20",                                             // 61 mountain
+  "M6 20 V10 A6 6 0 0 1 18 10 V20",                                            // 62 loop-top
+  "M4 7 H20 M4 12 H14 M4 17 H20",                                              // 63 bars-left
+  "M12 4 L20 8 V16 L12 20 L4 16 V8 Z",                                         // 64 hex-prism
+  "M7 4 L17 4 L17 20 L7 20 Z M11 8 V16",                                       // 65 door
+  "M4 12 A8 8 0 0 1 20 12 M8 12 A4 4 0 0 1 16 12 M12 12 V20",                  // 66 rainbow-leg
+  "M6 6 L18 18 M18 6 L6 18 M12 3 V21",                                         // 67 cross-star
+  "M5 8 H19 L12 19 Z",                                                         // 68 wedge-down
+  "M12 3 L14 10 L21 12 L14 14 L12 21 L10 14 L3 12 L10 10 Z M12 8 V16",         // 69 compass
+  "M4 16 C7 16 7 8 12 8 C17 8 17 16 20 16",                                    // 70 s-curve
+  "M5 5 H19 V19 H5 Z M9 9 H15 V15 H9 Z",                                       // 71 frame-inner
+  "M12 4 V20 M4 12 H20 M6.5 6.5 L17.5 17.5 M17.5 6.5 L6.5 17.5",               // 72 star8-line
 ];
-const FILL_GLYPHS = new Set([1, 3, 5, 7, 9, 26, 28, 37, 43]); // 0-based：…/half-disc-top/half-disc-bottom 填滿版
+const FILL_GLYPHS = new Set([1, 3, 5, 7, 9, 26, 28, 37, 43, 51, 57, 68]); // 0-based：…/half-disc-top/half-disc-bottom 填滿版
 const PALETTE = ["#ffb84d", "#ff8a7a", "#7ec8ff", "#7ee0a3", "#d7a1ff", "#ff9ecb", "#ffe066", "#8fe8e0", "#9fb8ff", "#ff9e5e"];
 
 const Store = {
@@ -345,7 +414,7 @@ const Store = {
   write(d) { try { localStorage.setItem(this.key, JSON.stringify(d)); } catch (e) {} },
 };
 const Progress = {
-  load() { return Object.assign({ unlocked: 1, best: {} }, Store.read()); },
+  load() { return Object.assign({ unlocked: 1, best: {}, stars: {} }, Store.read()); },
   save(p) { Store.write(p); },
 };
 
@@ -472,6 +541,9 @@ const $ = (id) => document.getElementById(id);
     '找一对，连一条线。清空棋盘，进入下一关。': 'Find a pair and draw a line. Clear the board to advance.',
     '选择关卡': 'Select level',
     '✦ 全部清空 — 总览': '✦ All clear — summary',
+    '等级称号': 'Rank', '等级': 'Rank', '总星数': 'Stars',
+    '初学': 'Novice', '见习': 'Apprentice', '熟练': 'Adept',
+    '巧手': 'Skilled', '大师': 'Master', '宗师': 'Grandmaster',
     '提示 ＋10 秒 · 洗牌 ＋15 秒 · 可复原上一步': 'Hint +10 sec · Shuffle +15 sec · Undo last move',
     /* all-clear view */
     '十四关全部清空 — 这张图有始有终。': 'All 14 boards cleared — the pattern is complete.',
@@ -591,6 +663,51 @@ const isEn = () => I18N.lang() === 'en';
 function fmtMeta(rows, cols, pairs) {
   return isEn() ? `${rows}×${cols} · ${pairs} pairs` : `${rows}×${cols} · ${pairs} 对`;
 }
+/* ================= 等级：星级评价 + 称号 ================= */
+/* moves 在完成时恒等于配对数（每次成功消对才 +1），所以评星必须用时间。
+   par 随关卡规模缩放，提示/洗牌的时间惩罚会自然压低星级。 */
+function levelPairs(lv) { const L = LEVELS[lv - 1]; return (L.rows * L.cols) / 2; }
+function starsFor(lv, sec) {
+  const p = levelPairs(lv);
+  if (sec <= p * 3.0) return 3;
+  if (sec <= p * 5.5) return 2;
+  return 1;
+}
+function starsHTML(n) {
+  let out = "";
+  for (let i = 0; i < 3; i++) out += i < n ? "★" : "☆";
+  return out;
+}
+const RANKS = [
+  { r: 0.00, zh: "初学", en: "NOVICE" },
+  { r: 0.12, zh: "见习", en: "APPRENTICE" },
+  { r: 0.30, zh: "熟练", en: "ADEPT" },
+  { r: 0.50, zh: "巧手", en: "SKILLED" },
+  { r: 0.72, zh: "大师", en: "MASTER" },
+  { r: 0.90, zh: "宗师", en: "GRANDMASTER" },
+];
+function totalStars() {
+  let n = 0;
+  for (const k in progress.stars) n += progress.stars[k] || 0;
+  return n;
+}
+function maxStars() { return LEVELS.length * 3; }
+function rankFor(n) {
+  const q = maxStars() ? n / maxStars() : 0;
+  let out = RANKS[0];
+  for (const x of RANKS) if (q >= x.r) out = x;
+  return out;
+}
+function updateRank() {
+  const n = totalStars(), r = rankFor(n);
+  const el = $("rankLine");
+  if (el) {
+    const name = isEn() ? r.en : r.zh;
+    el.innerHTML = `<span class="rl-k">${isEn() ? "RANK" : "等级"}</span>` +
+                   `<span class="rl-n">${name}</span>` +
+                   `<span class="rl-s">${starsHTML(3)} <b>${n}</b>/${maxStars()}</span>`;
+  }
+}
 function fmtBest(t, m) {
   return isEn() ? `Best ${t} · ${m}` : `最佳 ${t} · ${m} 步`;
 }
@@ -671,14 +788,19 @@ function svgFor(id) {
 /* 渲染選關 */
 function renderLevels() {
   const wrap = $("levelList"); wrap.innerHTML = "";
+  updateRank();
   LEVELS.forEach((L, i) => {
     const lv = i + 1;
     const pairs = (L.rows * L.cols) / 2;
     const b = document.createElement("button");
     b.className = "lvl" + (lv > progress.unlocked ? " locked" : "") + (lv === progress.unlocked ? " cur" : "");
-    b.innerHTML = `<div class="n">${lv}</div><div class="meta">${fmtMeta(L.rows, L.cols, pairs)}</div><div class="best"></div>`;
+    const got = (progress.stars && progress.stars[lv]) || 0;
+    b.innerHTML = `<div class="n">${lv}</div><div class="meta">${fmtMeta(L.rows, L.cols, pairs)}</div>` +
+                  `<div class="st${got ? "" : " none"}">${starsHTML(got)}</div>` +
+                  `<div class="best"></div>`;
     const best = progress.best[lv];
     if (best) b.querySelector(".best").textContent = fmtBest(best.time, best.moves);
+    if (got) b.classList.add("rated");
     b.addEventListener("click", () => { SFX.tick(); startLevel(i); });
     wrap.appendChild(b);
   });
@@ -888,6 +1010,11 @@ function paintWin() {
   if (!lastWin) return;
   const w = lastWin;
   $("clearTitle").innerHTML = w.title;
+  const stEl = $("clearStars");
+  if (stEl) {
+    stEl.hidden = w.daily || !w.stars;
+    if (!stEl.hidden) stEl.innerHTML = starsHTML(w.stars);
+  }
   $("clearStats").innerHTML = fmtStatsHTML(w.t, w.moves);
   const recEl = $("clearRec");
   recEl.hidden = !w.isRec;
@@ -919,12 +1046,18 @@ function win() {
   if (!b || isRec) {
     progress.best[state.lv] = { time: t, moves: state.moves };
   }
+  /* 星级：取历史最好，不因重玩变差而降级 */
+  const gained = starsFor(state.lv, Math.round(elapsedSec()));
+  state.stars = gained;
+  if (!progress.stars) progress.stars = {};
+  if ((progress.stars[state.lv] || 0) < gained) progress.stars[state.lv] = gained;
   if (state.lv === progress.unlocked && state.lv < LEVELS.length) progress.unlocked = state.lv + 1;
   Progress.save(progress);
   lastWin = {
     title: state.lv === LEVELS.length ? "ALL CLEAR" : "LINK CLEAR",
     t, moves: state.moves,
     isRec: isRec && state.lv < LEVELS.length,
+    stars: gained,
     daily: false,
     nextHidden: state.lv >= LEVELS.length,
   };
@@ -1001,6 +1134,7 @@ function refreshToday() {
 }
 /* 全通總結 */
 function openClear() {
+  updateRank();
   const grid = $("clearStatsGrid");
   let sumPairs = 0, sumT = 0, sumM = 0, cnt = 0, minT = 1e9, minTLv = 0, minM = 1e9, minMLv = 0;
   LEVELS.forEach((L, i) => {
@@ -1013,7 +1147,13 @@ function openClear() {
     if (b.moves < minM) { minM = b.moves; minMLv = i + 1; }
   });
   const card = (k, v, u) => `<div class="stat-card"><div class="sk">${TT(k)}</div><div class="sv">${v}</div><div class="su">${u}</div></div>`;
+  const rk = rankFor(totalStars());
+  const sub = $("clearSub");
+  if (sub) sub.textContent = isEn()
+    ? `All ${LEVELS.length} boards cleared — the pattern is complete.`
+    : `${LEVELS.length} 关全部清空 — 这张图有始有终。`;
   grid.innerHTML =
+    card("等级称号", isEn() ? rk.en : rk.zh, starsHTML(3) + " " + totalStars() + "/" + maxStars()) +
     card("总对数", sumPairs, clearedLabel(cnt)) +
     card("最快一关", minT < 1e9 ? fmtTime(minT) : "—", minTLv ? lvlLabel(minTLv) : "") +
     card("最少步数", minM < 1e9 ? minM : "—", minMLv ? lvlLabel(minMLv) : "") +
