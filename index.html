@@ -78,12 +78,33 @@
   .hero-title b{font-weight:700;color:var(--amber)}
   .hero-sub{margin-top:14px;font-size:14px;color:var(--muted);letter-spacing:.06em}
   .hero-en{margin-top:6px;font-family:var(--mono);font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--faint)}
-  .levels{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;width:100%;max-width:760px;margin-top:26px}
-  .lvl{position:relative;padding:16px 8px 12px;border:1px solid var(--line2);text-align:center;transition:border-color .2s,transform .15s}
-  .lvl:hover{border-color:var(--amber);transform:translateY(-2px)}
-  .lvl .n{font-family:var(--mono);font-size:22px;font-weight:600;color:var(--ink)}
-  .lvl .meta{font-family:var(--mono);font-size:9px;letter-spacing:.18em;color:var(--faint);text-transform:uppercase;margin-top:6px}
-  .lvl .best{font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--amber);margin-top:5px;min-height:12px}
+  /* ── 選關：橫向矩形卡片 ─────────────────────────────────────
+     舊版是 96px 方形磚，手機上得縮到 74px 才排得下，四種資訊疊成一團。
+     改成橫向卡：一行讀完「第幾關 · 多大 · 幾星 · 最快」。
+     欄寬用 auto-fill——760px 自動兩欄、手機自動一欄，不必再寫斷點。 */
+  .levels{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:8px;width:100%;max-width:760px;margin-top:22px}
+  .lvl{position:relative;display:flex;align-items:center;gap:10px;min-height:46px;padding:0 13px;
+    border:1px solid var(--line2);text-align:left;overflow:hidden;
+    transition:border-color .25s,transform .2s}
+  .lvl::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;
+    background:radial-gradient(150px 90px at var(--mx,50%) var(--my,50%),rgba(255,184,77,.14),transparent 72%);
+    transition:opacity .3s}
+  .lvl.hot::before{opacity:1}
+  .lvl:hover{border-color:var(--amber);transform:translateX(2px)}
+  .lvl .n{font-family:var(--mono);font-size:17px;font-weight:600;color:var(--ink);min-width:26px;position:relative}
+  .lvl .meta{flex:1;min-width:0;font-family:var(--mono);font-size:9px;letter-spacing:.12em;color:var(--faint);text-transform:uppercase;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lvl .st{display:flex;gap:1px;font-size:11px;line-height:1;color:var(--amber);position:relative}
+  .lvl .st i{font-style:normal;opacity:.26;transform:scale(.8);transition:opacity .38s ease,transform .38s cubic-bezier(.22,.61,.36,1)}
+  .lvl .st i.on{opacity:1;transform:scale(1)}
+  .lvl .st.none i{color:#3a3a3a}
+  .lvl .best{font-family:var(--mono);font-size:9px;letter-spacing:.06em;color:var(--amber);white-space:nowrap;position:relative}
+  .lvl .bar{position:absolute;left:0;bottom:0;height:2px;width:0;
+    background:linear-gradient(90deg,var(--amber),#ffd89a);
+    transition:width .75s cubic-bezier(.22,.61,.36,1)}
+  /* 進場：先由 JS 掛 .fx-hide，觸發後加 .in。JS 若沒跑，卡片本來就是可見的。 */
+  .lvl.anim{transition:opacity .45s ease,transform .45s cubic-bezier(.22,.61,.36,1)}
+  .lvl.fx-hide{opacity:0;transform:translateY(8px)}
   /* ── 等级：称号 + 星级 ─────────────────────────────────────── */
 .rank-line{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;
   font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
@@ -91,13 +112,13 @@
 .rank-line .rl-n{color:var(--amber);letter-spacing:.2em}
 .rank-line .rl-s{color:var(--muted)}
 .rank-line .rl-s b{color:var(--amber);font-weight:600}
-.lvl .st{font-size:11px;letter-spacing:.1em;color:var(--amber);margin-top:4px;line-height:1}
-.lvl .st.none{color:#3a3a3a}
 .lvl.rated{border-color:rgba(255,184,77,.42)}
 .clear-stars{font-size:26px;letter-spacing:.28em;color:var(--amber);margin:4px 0 14px;text-indent:.28em}
-.lvl.locked{opacity:.38;pointer-events:none}
-  .lvl.locked::after{content:"🔒";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:16px;filter:grayscale(1)}
+.lvl.locked{opacity:.55;pointer-events:none}
+  .lvl.locked::after{content:"🔒";position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:13px;filter:grayscale(1)}
   .lvl.cur{border-color:var(--amber)}
+  .lvl.cur::after{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--amber)}
+  .lvl.cur .n{color:var(--amber)}
 
   .hint-line{margin-top:26px;font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--faint);line-height:2}
 
@@ -135,13 +156,15 @@
   #toast{position:fixed;left:50%;bottom:calc(34px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(10px);z-index:80;font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:#0d0d11;background:var(--amber);padding:9px 16px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;max-width:calc(100vw - 32px);white-space:nowrap}
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-  @media (pointer:coarse){ .btn{padding:11px 15px} .lvl{padding:18px 8px 14px} }
+  @media (pointer:coarse){ .btn{padding:11px 15px} .lvl{min-height:48px} }
   /* 觸控裝置：避免「點完殘留 hover」 */
   @media (hover:none){
     .btn:hover{color:var(--muted);border-color:var(--line2)}
     .btn.primary:hover{background:none;color:var(--amber)}
     .cell:hover .inner{background:transparent}
     .lvl:hover{border-color:var(--line2);transform:none}
+    /* 這裡不要擋 .lvl.hot::before —— JS 已用 pointerType 濾掉觸控，
+       再擋一次會把滑鼠裝置的聚光一起殺掉（此機器的 hover:none 就是這樣）。 */
   }
   /* 窄螢幕安全區內縮 */
   @media (max-width:700px){ .shell{padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))} }
@@ -151,10 +174,13 @@
     .toolbar{gap:6px;margin:2px 0 12px}
     .toolbar .spacer{display:none}
     .toolbar .btn{flex:0 1 calc((100% - 12px)/3);text-align:center;padding:11px 2px;font-size:10px;white-space:nowrap;overflow:hidden}
-    .levels{gap:8px;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));margin-top:22px}
-    .lvl{padding:11px 5px 9px}
-    .lvl .n{font-size:18px}
-    .lvl .meta{margin-top:4px}
+    .levels{gap:7px;margin-top:20px}
+    .lvl{min-height:46px;padding:0 12px;gap:9px}
+    .lvl .n{font-size:16px;min-width:24px}
+    .lvl .meta{letter-spacing:.05em;font-size:10px}
+    .lvl .best{font-size:10px}
+    .lvl .st{font-size:12px}
+    .lvl .bm{display:none}          /* 步數先讓位給字級 */
     .rank-line{font-size:9px;gap:7px}
     #viewMenu{padding-bottom:26px}
     .center-wrap{padding:6px 0 18px}
@@ -164,10 +190,11 @@
     .wordmark{font-size:13px;letter-spacing:.18em}
     .hud{gap:8px;font-size:10px}
     .hero-sub{font-size:13px}
-    .levels{grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:6px;margin-top:16px}
-    .lvl{padding:9px 4px 7px}
-    .lvl .n{font-size:16px}
-    .lvl .best{font-size:8px}
+    .levels{gap:6px;margin-top:16px}
+    .lvl{min-height:44px;padding:0 11px;gap:8px}
+    .lvl .n{font-size:15px;min-width:22px}
+    .lvl .meta{font-size:9.5px}
+    .lvl .best{font-size:9.5px}
     .clear-stars{font-size:22px}
   }
   /* 矮螢幕（橫屏等）：選單可捲、頂置顯示，藏 footer 騰空間 */
@@ -176,11 +203,8 @@
     .hero-title{font-size:clamp(34px,6.2vw,56px)}
     .hero-sub{margin-top:6px}
     .k{margin:14px 0 8px}
-    .levels{margin-top:18px;gap:8px}
-    .lvl{padding:12px 6px 10px}
-    .lvl .n{font-size:19px}
-    .lvl .meta{margin-top:4px}
-    .lvl .st{margin-top:2px}
+    .levels{margin-top:16px;gap:6px}
+    .lvl{min-height:42px}
     .hint-line{margin-top:12px}
     footer{display:none}
   }
@@ -190,15 +214,25 @@
     .center-wrap{justify-content:flex-start;padding-top:8px}
     .hero-title{font-size:38px}
     .hero-sub{margin-top:8px}
-    .levels{margin-top:16px}
+    .levels{margin-top:14px}
     .k{margin:12px 0 8px}
-    .lvl{padding:10px 6px 8px}
-    .lvl .n{font-size:17px}
+    .lvl{min-height:40px}
     footer{display:none}
   }
-  @media (prefers-reduced-motion:reduce){ *{animation-duration:.001s!important;transition-duration:.001s!important} }
+  /* 減少動態：只砍位移，不砍淡入、填星與進度條。
+     原本這裡是 *{transition-duration:.001s!important}——那會讓整站變成靜止圖片，
+     使用者在 iOS 開「減少動態效果」時回報過整個網站失去動效。減量，不是關掉。 */
+  @media (prefers-reduced-motion:reduce){
+    .lvl.fx-hide{transform:none}
+    .lvl:hover{transform:none}
+    .lvl.anim{transition:opacity .3s ease}
+    .lvl .st i{transform:none}
+    .lvl .bar{transition:width .4s linear}
+  }
   /* EN 模式下英文較寬：微調密排，避免溢出 */
-  html[data-lang="en"] .lvl .meta,html[data-lang="en"] .lvl .best{letter-spacing:.03em;font-size:8px}
+  /* 只調字距，不要在這裡寫 font-size——它的特異性會蓋掉 @media 裡的放大 */
+  html[data-lang="en"] .lvl .meta{letter-spacing:.02em}
+  html[data-lang="en"] .lvl .best{letter-spacing:.02em}
   html[data-lang="en"] .hint-line,html[data-lang="en"] .hero-en{letter-spacing:.14em}
   html[data-lang="en"] .daily .dm{letter-spacing:.1em}
 </style>
@@ -708,6 +742,13 @@ function updateRank() {
                    `<span class="rl-s">${starsHTML(3)} <b>${n}</b>/${maxStars()}</span>`;
   }
 }
+/* 卡上的最佳成績：步數包在 .bm 裡，窄螢幕整段藏掉。
+   一行要塞「編號／尺寸／星等／成績」四件事，手機上就只剩 8px 可讀——
+   砍掉最不重要的那個，換回字級。 */
+function bestNodes(t, m) {
+  return isEn() ? `Best ${t}<span class="bm"> · ${m}</span>`
+                : `最佳 ${t}<span class="bm"> · ${m} 步</span>`;
+}
 function fmtBest(t, m) {
   return isEn() ? `Best ${t} · ${m}` : `最佳 ${t} · ${m} 步`;
 }
@@ -786,24 +827,110 @@ function svgFor(id) {
 }
 
 /* 渲染選關 */
+/* 卡上的星等要能逐顆亮起，所以畫成獨立元素而不是一個字串。
+   updateRank / openClear 仍用 starsHTML 的字串版。 */
+function starsNodes(n) {
+  let out = "";
+  for (let i = 0; i < 3; i++) out += `<i>${i < n ? "★" : "☆"}</i>`;
+  return out;
+}
+
 function renderLevels() {
   const wrap = $("levelList"); wrap.innerHTML = "";
   updateRank();
   LEVELS.forEach((L, i) => {
     const lv = i + 1;
     const pairs = (L.rows * L.cols) / 2;
+    const locked = lv > progress.unlocked;
     const b = document.createElement("button");
-    b.className = "lvl" + (lv > progress.unlocked ? " locked" : "") + (lv === progress.unlocked ? " cur" : "");
+    b.type = "button";
+    b.className = "lvl anim fx-hide" + (locked ? " locked" : "") + (lv === progress.unlocked ? " cur" : "");
     const got = (progress.stars && progress.stars[lv]) || 0;
-    b.innerHTML = `<div class="n">${lv}</div><div class="meta">${fmtMeta(L.rows, L.cols, pairs)}</div>` +
-                  `<div class="st${got ? "" : " none"}">${starsHTML(got)}</div>` +
-                  `<div class="best"></div>`;
+    b.dataset.stars = got;
     const best = progress.best[lv];
-    if (best) b.querySelector(".best").textContent = fmtBest(best.time, best.moves);
+    b.innerHTML =
+      `<span class="n">${String(lv).padStart(2, "0")}</span>` +
+      `<span class="meta">${fmtMeta(L.rows, L.cols, pairs)}</span>` +
+      `<span class="st${got ? "" : " none"}">${starsNodes(got)}</span>` +
+      `<span class="best">${best ? bestNodes(best.time, best.moves) : ""}</span>` +
+      `<span class="bar"></span>`;
     if (got) b.classList.add("rated");
+    b.setAttribute("aria-label",
+      (isEn() ? `Level ${lv}, ${pairs} pairs, ${got} of 3 stars.` : `第 ${lv} 关，${pairs} 对，${got} 星。`) +
+      (locked ? (isEn() ? " Locked." : " 未解锁。") : ""));
     b.addEventListener("click", () => { SFX.tick(); startLevel(i); });
     wrap.appendChild(b);
   });
+  fxLevels();
+}
+
+/* ── 關卡卡的動效 ──────────────────────────────────────────
+   1) 指標聚光：--mx/--my 餵 CSS 的 radial-gradient
+   2) 進場：卡片捲進視野才浮起，依序錯開
+   3) 填星 + 進度條：進場後才跑，避免十九張同時動
+   三個都必須有獨立的保險——IntersectionObserver 沒觸發時，
+   卡片會永遠停在 opacity:0（這個站踩過同類的坑）。 */
+function fxLevels() {
+  const cards = Array.from(document.querySelectorAll("#levelList .lvl"));
+  if (!cards.length) return;
+
+  /* 聚光靠 pointerType 判斷，不用 matchMedia("(hover:hover)")——
+     後者在無頭瀏覽器與部分裝置上回報不準（這個站已被它坑過）。 */
+  cards.forEach((c) => {
+    c.addEventListener("pointermove", (e) => {
+      if (e.pointerType === "touch") return;          // 手指拖曳不追光
+      const r = c.getBoundingClientRect();
+      c.style.setProperty("--mx", (e.clientX - r.left) + "px");
+      c.style.setProperty("--my", (e.clientY - r.top) + "px");
+      c.classList.add("hot");
+    });
+    c.addEventListener("pointerleave", () => {
+      c.classList.remove("hot");
+      c.style.removeProperty("--mx");
+      c.style.removeProperty("--my");
+    });
+  });
+
+  const fill = (c) => {
+    if (c.dataset.filled) return;
+    c.dataset.filled = "1";
+    const got = +c.dataset.stars || 0;
+    if (got) {
+      c.querySelectorAll(".st i").forEach((el, i) => {
+        if (i < got) setTimeout(() => el.classList.add("on"), i * 120);
+      });
+    } else {
+      c.querySelectorAll(".st i").forEach((el) => el.classList.add("on"));
+    }
+    const bar = c.querySelector(".bar");
+    if (bar) setTimeout(() => { bar.style.width = (got / 3 * 100) + "%"; }, 80);
+  };
+
+  const show = (c, d) => setTimeout(() => {
+    c.classList.add("in");
+    c.classList.remove("fx-hide");
+    fill(c);
+    setTimeout(() => c.classList.remove("anim"), 520);
+  }, d);
+
+  if ("IntersectionObserver" in window) {
+    const io = new IntersectionObserver((es) => {
+      es.forEach((e) => {
+        if (!e.isIntersecting) return;
+        show(e.target, Math.min(cards.indexOf(e.target), 8) * 55);
+        io.unobserve(e.target);
+      });
+    }, { rootMargin: "0px 0px -6% 0px" });
+    cards.forEach((c) => io.observe(c));
+    // 保險：observer 萬一沒觸發（舊瀏覽器、容器量測為零），全部照樣現身
+    setTimeout(() => cards.forEach((c) => {
+      if (c.classList.contains("fx-hide")) { c.classList.remove("anim", "fx-hide"); c.classList.add("in"); }
+      fill(c);
+      setTimeout(() => c.classList.remove("anim"), 520);
+    }), 1200);
+  } else {
+    cards.forEach((c, i) => show(c, Math.min(i, 8) * 55));
+  }
 }
 
 /* 進入一關 */
