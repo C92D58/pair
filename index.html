@@ -150,6 +150,19 @@
   .overlay .stats{font-family:var(--mono);font-size:12px;letter-spacing:.14em;color:var(--muted);line-height:2.2}
   .overlay .stats b{color:var(--ink)}
   .overlay .actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+  /* 觸控目標：遮罩裡的按鈕在手機上原本只有 ~35px 高 ✗ 低於 44px 的建議值 */
+  .overlay .actions .btn{min-height:44px;display:inline-flex;align-items:center;padding:0 20px}
+
+  /* ── 玩法說明 ── */
+  .help-steps{display:flex;flex-direction:column;gap:18px;text-align:left;max-width:420px;width:100%;margin:4px 0}
+  .help-step{display:flex;gap:14px;align-items:flex-start}
+  .help-n{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--amber);flex:0 0 22px;padding-top:3px}
+  .help-tx{flex:1;min-width:0}
+  .help-t{font-size:15px;color:var(--ink);letter-spacing:.02em}
+  .help-d{font-size:12px;color:var(--muted);line-height:1.75;margin-top:4px}
+  .help-fig{width:100%;max-width:360px;margin:6px auto 0;display:block}
+  .help-fig .cap{font-family:var(--mono);font-size:9px;letter-spacing:.16em}
+  .help-note{font-family:var(--mono);font-size:9px;letter-spacing:.12em;color:var(--faint);line-height:1.9;max-width:400px}
   @keyframes fadeIn{from{opacity:0}to{opacity:1}}
   .rec-line{font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:.14em}
 
@@ -276,13 +289,14 @@
       <button class="allclear" id="btnAllClear" hidden type="button">✦ 全部清空 — 总览</button>
     </div>
     <p class="hint-line">提示 ＋10 秒 · 洗牌 ＋15 秒 · 可复原上一步</p>
+    <button class="btn small helpbtn" id="btnHelpMenu" type="button">玩法说明</button>
   </section>
 
   <!-- 全通总结 -->
   <section id="viewClear" class="shell center-wrap" hidden>
     <p class="k">Record</p>
     <div class="hero-title title-sm">ALL CLEAR<span style="color:var(--amber)">.</span></div>
-    <p class="hero-sub" id="clearSub">十四关全部清空 — 这张图有始有终。</p>
+    <p class="hero-sub" id="clearSub">全部关卡清空 — 这张图有始有终。</p>
     <div class="stat-grid" id="clearStatsGrid"></div>
     <p class="clear-note" id="clearNote"></p>
     <div class="actions-row">
@@ -301,6 +315,7 @@
       <button class="btn small" id="btnUndo">复原</button>
       <button class="btn small" id="btnPause">暂停</button>
       <button class="btn small" id="btnRestart">重开</button>
+      <button class="btn small" id="btnHelp" aria-label="玩法说明">?</button>
     </div>
     <div class="board-wrap">
       <div class="board" id="board"></div>
@@ -319,6 +334,64 @@
     <button class="btn primary" id="btnResume">继续</button>
     <button class="btn" id="btnRestart2">重开本关</button>
     <button class="btn" id="btnQuit">回选关</button>
+  </div>
+</div>
+
+<!-- 玩法說明（首次進入自動打開 ✗ 之後可從工具列或選單再看） -->
+<div class="overlay" id="helpOverlay" hidden>
+  <button class="langbtn corner-lang" type="button" data-lang-toggle aria-label="Switch to English">EN</button>
+  <h2>玩法</h2>
+  <div class="help-steps">
+    <div class="help-step">
+      <span class="help-n">01</span>
+      <span class="help-tx">
+        <span class="help-t">点两个相同的图案</span>
+        <span class="help-d">它们会连成一条线并消失。</span>
+      </span>
+    </div>
+    <div class="help-step">
+      <span class="help-n">02</span>
+      <span class="help-tx">
+        <span class="help-t">连线最多转两次弯</span>
+        <span class="help-d">路线必须全程走在空格上 ✗ 可以绕棋盘外圈。转第三次就不算。</span>
+      </span>
+    </div>
+    <svg class="help-fig" viewBox="0 0 340 96" role="img" aria-labelledby="helpFigT">
+      <title id="helpFigT">连线示意：左侧可以连，右侧会被挡住</title>
+      <!-- 左：可以连（两转） -->
+      <g>
+        <rect x="10" y="30" width="20" height="20" rx="3" fill="#e9e6df" opacity=".92"/>
+        <rect x="40" y="30" width="20" height="20" rx="3" fill="#e9e6df" opacity=".18"/>
+        <rect x="70" y="30" width="20" height="20" rx="3" fill="#e9e6df" opacity=".92"/>
+        <polyline points="20,40 20,12 80,12 80,40" fill="none" stroke="#ffb84d"
+                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="20" cy="40" r="3.5" fill="#ffb84d"/>
+        <circle cx="80" cy="40" r="3.5" fill="#ffb84d"/>
+        <text class="cap" x="50" y="72" fill="#7ee0a3" text-anchor="middle">✓ 可以连</text>
+      </g>
+      <!-- 右：不行 -->
+      <g transform="translate(180,0)">
+        <rect x="10" y="30" width="20" height="20" rx="3" fill="#e9e6df" opacity=".92"/>
+        <rect x="40" y="30" width="20" height="20" rx="3" fill="#e9e6df" opacity=".18"/>
+        <rect x="70" y="30" width="20" height="20" rx="3" fill="#e9e6df" opacity=".92"/>
+        <rect x="10" y="0" width="20" height="20" rx="3" fill="#e9e6df" opacity=".18"/>
+        <rect x="70" y="0" width="20" height="20" rx="3" fill="#e9e6df" opacity=".18"/>
+        <rect x="10" y="60" width="20" height="20" rx="3" fill="#e9e6df" opacity=".18"/>
+        <rect x="70" y="60" width="20" height="20" rx="3" fill="#e9e6df" opacity=".18"/>
+        <text class="cap" x="50" y="72" fill="#ff7d6e" text-anchor="middle">✗ 被挡住</text>
+      </g>
+    </svg>
+    <div class="help-step">
+      <span class="help-n">03</span>
+      <span class="help-tx">
+        <span class="help-t">清空棋盘就过关</span>
+        <span class="help-d">按时间评三星。提示 ＋10 秒、洗牌 ＋15 秒 ✗ 用越少越快星越多。</span>
+      </span>
+    </div>
+  </div>
+  <p class="help-note">每天还有一盘 — 同一张棋盘，全球同一天 ✗ 只跟自己比。</p>
+  <div class="actions">
+    <button class="btn primary" id="btnHelpClose">知道了</button>
   </div>
 </div>
 
@@ -580,9 +653,22 @@ const $ = (id) => document.getElementById(id);
     '巧手': 'Skilled', '大师': 'Master', '宗师': 'Grandmaster',
     '提示 ＋10 秒 · 洗牌 ＋15 秒 · 可复原上一步': 'Hint +10 sec · Shuffle +15 sec · Undo last move',
     /* all-clear view */
-    '十四关全部清空 — 这张图有始有终。': 'All 14 boards cleared — the pattern is complete.',
+    '全部关卡清空 — 这张图有始有终。': 'Every board cleared — the pattern is complete.',
     '← 回选关': '← Levels',
     '每日一盘 →': 'Daily →',
+    /* help overlay */
+    '玩法': 'How to play',
+    '点两个相同的图案': 'Tap two matching tiles',
+    '它们会连成一条线并消失。': 'They link up and clear.',
+    '连线最多转两次弯': 'The line may turn at most twice',
+    '路线必须全程走在空格上 ✗ 可以绕棋盘外圈。转第三次就不算。': 'The route must cross empty space only, and may run around the outside of the board. A third turn does not count.',
+    '清空棋盘就过关': 'Clear the board to finish',
+    '按时间评三星。提示 ＋10 秒、洗牌 ＋15 秒 ✗ 用越少越快星越多。': 'Stars are rated on time. Hints add 10s and shuffles add 15s — faster and leaner earns more.',
+    '每天还有一盘 — 同一张棋盘，全球同一天 ✗ 只跟自己比。': 'There is also a daily board — the same grid for everyone that day. You only race your own record.',
+    '知道了': 'Got it',
+    '✓ 可以连': '✓ Valid',
+    '✗ 被挡住': '✗ Blocked',
+    '连线示意：左侧可以连，右侧会被挡住': 'Diagram: the pair on the left links up, the one on the right is blocked',
     /* game toolbar */
     '← 选关': '← Levels',
     '提示 ＋10s': 'Hint +10s',
@@ -629,6 +715,7 @@ const $ = (id) => document.getElementById(id);
   }
   special('.daily .dh', 'Daily Grid');
   special('#pauseOverlay h2', 'Paused');
+  special('#helpOverlay h2', 'How to play');
 
   /* meta / title originals (zh) */
   var zhTitle = (document.querySelector('title') || {}).textContent || '';
@@ -1348,6 +1435,26 @@ $("btnShuffle").addEventListener("click", withBtn(() => {
   renderBoard(); renderHud();
   toast(TT("洗牌 ＋15 秒"));
 }));
+
+/* 玩法說明：首次進來自動開一次 ✗ 之後從工具列或選單再看 */
+const HELP_KEY = "pair-wahsun-help-v1";
+function openHelp() { $("helpOverlay").hidden = false; }
+function closeHelp() {
+  $("helpOverlay").hidden = true;
+  try { localStorage.setItem(HELP_KEY, "1"); } catch (e) {}
+}
+$("btnHelpClose").addEventListener("click", withBtn(closeHelp));
+$("btnHelp").addEventListener("click", withBtn(openHelp));
+$("btnHelpMenu").addEventListener("click", withBtn(openHelp));
+/* Esc 關閉（與其他遮罩一致的心智模型） */
+window.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  if (!$("helpOverlay").hidden) { closeHelp(); return; }
+  if (!$("pauseOverlay").hidden) return;   /* 暫停遮罩已有自己的按鈕 ✗ 不搶 */
+});
+try {
+  if (!localStorage.getItem(HELP_KEY)) openHelp();
+} catch (e) {}
 
 $("btnDaily").addEventListener("click", () => { SFX.tick(); startDaily(); });
 $("btnAllClear").addEventListener("click", () => { SFX.tick(); openClear(); });
