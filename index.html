@@ -5,6 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, maximum-scale=1" />
 <meta name="theme-color" content="#0d0d11" />
 <title>PAIR — 对对相连 · 找一对，连一条线</title>
+<meta name="description" content="找一对，连一条线。清空棋盘，进入下一关。可安装、离线可玩。" />
+<link rel="icon" type="image/png" href="/icons/icon-192.png" />
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon-180.png" />
+<link rel="manifest" href="/manifest.webmanifest" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="PAIR" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="PAIR" />
+<meta property="og:title" content="PAIR — 對對相連" />
+<meta property="og:description" content="找一對，連一條線。清空棋盤，進入下一關。" />
+<meta property="og:image" content="https://pair.wahsun.org/icons/icon-512.png" />
+<meta property="og:url" content="https://pair.wahsun.org/" />
+<meta name="twitter:card" content="summary" />
 <style>
   :root{
     --bg:#0d0d11; --panel:#15151b; --panel2:#1c1c24; --ink:#e9e6df;
@@ -1455,6 +1470,26 @@ window.addEventListener("keydown", (e) => {
 try {
   if (!localStorage.getItem(HELP_KEY)) openHelp();
 } catch (e) {}
+
+/* ── PWA：可安裝到主畫面 + 離線可玩 ──────────────────────────
+   sw.js 的 navigation 走 network-first，所以「永遠拿到新版 HTML」與
+   「離線還能開」這兩件事同時成立。這裡只負責註冊與更新時機。 */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").then((reg) => {
+      const promote = (w) => { try { w.postMessage({ type: "SKIP_WAITING" }); } catch (e) {} };
+      if (reg.waiting) promote(reg.waiting);
+      reg.addEventListener("updatefound", () => {
+        const sw = reg.installing;
+        if (!sw) return;
+        sw.addEventListener("statechange", () => {
+          // 已有舊版在跑才接手；首次安裝不需要，也避免擾動剛開的局。
+          if (sw.state === "installed" && navigator.serviceWorker.controller) promote(sw);
+        });
+      });
+    }).catch(() => { /* 註冊失敗只是少了離線能力 ✗ 遊戲照常 */ });
+  });
+}
 
 $("btnDaily").addEventListener("click", () => { SFX.tick(); startDaily(); });
 $("btnAllClear").addEventListener("click", () => { SFX.tick(); openClear(); });
